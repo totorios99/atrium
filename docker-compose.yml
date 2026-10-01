@@ -1,5 +1,7 @@
+name: atrium
 services:
-  cockpit:
+  atrium:
+    container_name: atrium
     # built by .github/workflows/deploy.yml on every push to main
     image: ghcr.io/totorios99/dashboard:latest
     ports:
@@ -21,7 +23,10 @@ services:
       - ${HOME}/Documents/The Alchemist's Atrium/fitness-brain:/vaults/fitness-brain
       - ${HOME}/Documents/The Alchemist's Atrium/spirituality-brain:/vaults/spirituality-brain
       - ${HOME}/Documents/The Alchemist's Atrium/homelab-brain:/vaults/homelab-brain
-      - ${HOME}/Documents/The Alchemist's Atrium/central-brain:/vaults/central-brain
+      - ${HOME}/Documents/The Alchemist's Atrium/linux-brain:/vaults/linux-brain
+      - ${HOME}/Documents/The Alchemist's Atrium/webdev-brain:/vaults/webdev-brain
+      - ${HOME}/Documents/The Alchemist's Atrium/travel-brain:/vaults/travel-brain
+      - ${HOME}/Documents/The Alchemist's Atrium/coffee-brain:/vaults/coffee-brain
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3005/api/health"]
@@ -34,41 +39,19 @@ services:
 
   # polls ghcr.io for a newer image tag and recreates labeled containers —
   # this is the auto-deploy step, no inbound webhook/runner needed
-  watchtower:
-    image: containrrr/watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      # Credenciales de ghcr.io para las imagenes privadas (nido-del-amor).
-      # Watchtower hace sus propias llamadas al registry desde dentro del
-      # contenedor: el `docker login` del host no le llega solo.
-      #
-      # Se monta el DIRECTORIO, no el archivo. `docker login` no edita
-      # config.json en sitio: escribe un temporal y lo renombra, creando un
-      # inodo nuevo. Un bind de archivo fija el inodo viejo y el contenedor
-      # se queda mirando credenciales obsoletas para siempre.
-      - ${HOME}/.docker:/config:ro
-    environment:
-      DOCKER_CONFIG: /config
-    # Sin --label-enable: vigila TODOS los contenedores en marcha (también las
-    # apps de CasaOS). Para excluir uno: label
-    # com.centurylinklabs.watchtower.enable=false (p. ej. Frigate, que rompe
-    # config entre versiones). Un tag fijado (radarr:6.3.0) no sube de
-    # versión, pero linuxserver re-publica el mismo tag con base parcheada,
-    # así que también se recrean.
-    # --cleanup borra la imagen vieja: el rollback es fijar el tag de la
-    # versión anterior en el compose, no hay copia local.
-    command: --interval 300 --cleanup
-    restart: unless-stopped
 
 volumes:
   cockpit_db:
+    # Keep the original volume: it holds habits, inbox and the cockpit DB.
+    name: cockpit_cockpit_db
+    external: true
 
 x-casaos:
   architectures: ["amd64", "arm64"]
-  main: cockpit
+  main: atrium
   icon: "https://raw.githubusercontent.com/totorios99/dashboard/main/public/icon-512.png"
   title:
-    en_us: Second Brain Cockpit
+    en_us: Atrium
   category: Utilities
   description:
     en_us: Personal dashboard reading Obsidian vaults, habits, and weekly checklist.

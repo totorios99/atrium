@@ -48,9 +48,32 @@ export const config = {
       path:  join(VAULT_ROOT, 'homelab-brain'),
       color: '#378ADD',
     },
+    {
+      id:    'linux',
+      label: 'Linux',
+      path:  join(VAULT_ROOT, 'linux-brain'),
+      color: '#D4A017',
+    },
+    {
+      id:    'webdev',
+      label: 'Web Dev',
+      path:  join(VAULT_ROOT, 'webdev-brain'),
+      color: '#E879F9',
+    },
+    {
+      id:    'travel',
+      label: 'Travel',
+      path:  join(VAULT_ROOT, 'travel-brain'),
+      color: '#F97316',
+    },
+    {
+      id:    'coffee',
+      label: 'Coffee',
+      path:  join(VAULT_ROOT, 'coffee-brain'),
+      color: '#8B5A2B',
+    },
   ],
 
   // ── CENTRAL VAULT ──────────────────────────────────────────────────────────
-  centralVault: join(VAULT_ROOT, 'central-brain'),
 
 }
