@@ -3,7 +3,7 @@ services:
   atrium:
     container_name: atrium
     # built by .github/workflows/deploy.yml on every push to main
-    image: ghcr.io/totorios99/dashboard:latest
+    image: ghcr.io/totorios99/atrium:latest
     ports:
       - "3005:3005"
     environment:
@@ -35,7 +35,7 @@ services:
       retries: 3
     labels:
       com.centurylinklabs.watchtower.enable: "true"
-      icon: "https://raw.githubusercontent.com/totorios99/dashboard/main/public/icon-512.png"
+      icon: "https://raw.githubusercontent.com/totorios99/atrium/main/public/icon-512.png"
 
   # polls ghcr.io for a newer image tag and recreates labeled containers —
   # this is the auto-deploy step, no inbound webhook/runner needed
@@ -49,7 +49,7 @@ volumes:
 x-casaos:
   architectures: ["amd64", "arm64"]
   main: atrium
-  icon: "https://raw.githubusercontent.com/totorios99/dashboard/main/public/icon-512.png"
+  icon: "https://raw.githubusercontent.com/totorios99/atrium/main/public/icon-512.png"
   title:
     en_us: Atrium
   category: Utilities

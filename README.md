@@ -35,7 +35,7 @@ docker compose up -d --build   # local build
 
 ### Auto-deploy on push (GHCR + Watchtower)
 
-`.github/workflows/deploy.yml` builds and pushes `ghcr.io/totorios99/dashboard` on every push to `main`. On the host, `docker-compose.yml` pulls that image and a `watchtower` service polls the registry every 5 minutes, recreating the container when a new tag lands — no inbound webhook or self-hosted runner needed.
+`.github/workflows/deploy.yml` builds and pushes `ghcr.io/totorios99/atrium` on every push to `main`. On the host, `docker-compose.yml` pulls that image and a `watchtower` service polls the registry every 5 minutes, recreating the container when a new tag lands — no inbound webhook or self-hosted runner needed.
 
 ```bash
 docker compose up -d   # first run on the host; watchtower takes it from here
