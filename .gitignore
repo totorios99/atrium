@@ -7,3 +7,4 @@ prisma/**/*.db
 *.zip
 photos/
 .claude/*.tmp.*
+prisma/inbox-media/

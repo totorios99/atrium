@@ -1,17 +1,20 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db.js'
-import { config } from '@/vault.config.js'
 
-const SETTING_KEY = 'priority_order'
+// pinned vault ids (manual order); unpinned vaults auto-sort client-side
+const SETTING_KEY = 'priority_pins'
 
 export async function GET() {
   const row = await prisma.setting.findUnique({ where: { key: SETTING_KEY } })
-  const order = row ? JSON.parse(row.value) : config.vaults.map(v => v.id)
+  const order = row ? JSON.parse(row.value) : []
   return NextResponse.json({ order })
 }
 
 export async function PATCH(req) {
   const { order } = await req.json()
+  if (!Array.isArray(order) || !order.every(id => typeof id === 'string')) {
+    return NextResponse.json({ error: 'order must be string[]' }, { status: 400 })
+  }
   await prisma.setting.upsert({
     where:  { key: SETTING_KEY },
     update: { value: JSON.stringify(order) },

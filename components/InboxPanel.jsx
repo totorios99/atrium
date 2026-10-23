@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useInbox } from '@/hooks/useStatus.js'
 
 const TAGS = [
@@ -9,20 +9,145 @@ const TAGS = [
   { id: 'fitness',      label: 'fit',     cls: 'tag-fit'     },
   { id: 'spirituality', label: 'spirit',  cls: 'tag-spirit'  },
   { id: 'homelab',      label: 'home',    cls: 'tag-home'    },
+  { id: 'travel',       label: 'travel',  cls: 'tag-travel'  },
+  { id: 'linux',        label: 'linux',   cls: 'tag-linux'   },
+  { id: 'webdev',       label: 'web',     cls: 'tag-web'     },
+  { id: 'coffee',       label: 'coffee',  cls: 'tag-coffee'  },
   { id: 'branch',       label: 'branch',  cls: 'tag-branch'  },
 ]
 
 const tagInfo = id => TAGS.find(t => t.id === id) ?? TAGS[0]
 
+const fmtDate = iso => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+
+const hasDetail = i => !!(i.body || i.meta || i.media?.length)
+
+// mail-style detail view: subject, dates, notes, photos
+function InboxModal({ item, onClose, update, remove, addMedia, removeMedia }) {
+  const ref = useRef(null)
+  const [subject,   setSubject]   = useState(item.text ?? '')
+  const [notes,     setNotes]     = useState(item.body ?? '')
+  const [uploading, setUploading] = useState(false)
+  const [upError,   setUpError]   = useState(null)
+
+  useEffect(() => { ref.current?.showModal() }, [])
+
+  const t     = tagInfo(item.tag)
+  const meta  = item.meta ?? {}
+  const dates = Array.isArray(meta.dates) ? meta.dates : []
+  const links = Array.isArray(meta.links) ? meta.links : []
+  const saved = typeof item.id === 'number'   // optimistic tmp items can't take edits yet
+
+  const saveSubject = () => {
+    const v = subject.trim()
+    if (v && v !== item.text) update(item.id, { text: v })
+    else setSubject(item.text ?? '')
+  }
+  const saveNotes = () => { if (notes !== (item.body ?? '')) update(item.id, { body: notes }) }
+
+  const onFiles = async e => {
+    const files = [...e.target.files]
+    e.target.value = ''
+    if (!files.length) return
+    setUploading(true); setUpError(null)
+    const r = await addMedia(item.id, files)
+    setUploading(false)
+    if (!r.ok) setUpError(r.error)
+  }
+
+  return (
+    <dialog
+      ref={ref}
+      className="inbox-modal glass"
+      onClose={onClose}
+      onClick={e => { if (e.target === ref.current) ref.current.close() }}
+    >
+      <div className="im-head">
+        <span className={`tag ${t.cls}`}>{t.label}</span>
+        <input
+          className="im-subject"
+          value={subject}
+          onChange={e => setSubject(e.target.value)}
+          onBlur={saveSubject}
+          onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+          disabled={!saved}
+          aria-label="Subject"
+        />
+        <button className="x-btn" onClick={() => ref.current.close()} aria-label="Close">×</button>
+      </div>
+
+      <div className="im-meta">
+        {fmtDate(item.createdAt)}
+        {item.source && item.source !== 'manual' && <> · via {item.source}</>}
+        {meta.location && <> · {meta.location}</>}
+      </div>
+
+      {dates.length > 0 && (
+        <ul className="im-dates">
+          {dates.map((d, i) => (
+            <li key={i}><span className="field-label">{d.label || 'date'}</span>{d.date}</li>
+          ))}
+        </ul>
+      )}
+
+      <div className="field-label">Notes</div>
+      <textarea
+        className="im-notes"
+        value={notes}
+        onChange={e => setNotes(e.target.value)}
+        onBlur={saveNotes}
+        placeholder="Add notes…"
+        disabled={!saved}
+        rows={5}
+      />
+
+      {links.length > 0 && (
+        <ul className="im-links">
+          {links.map((l, i) => {
+            const href = typeof l === 'string' ? l : l?.url
+            if (!/^https?:\/\//.test(href ?? '')) return null   // http(s) only
+            return <li key={i}><a href={href} target="_blank" rel="noreferrer">{l.label || href}</a></li>
+          })}
+        </ul>
+      )}
+
+      <div className="im-photos-head">
+        <div className="field-label">Photos{item.media?.length ? ` · ${item.media.length}` : ''}</div>
+        {saved && (
+          <label className="ghost-btn">
+            {uploading ? 'uploading…' : '+ photo'}
+            <input type="file" accept="image/*" multiple hidden onChange={onFiles} disabled={uploading} />
+          </label>
+        )}
+      </div>
+      {upError && <p className="im-error">⚠ {upError}</p>}
+      {item.media?.length > 0 && (
+        <div className="im-photos">
+          {item.media.map(m => (
+            <div key={m.url} className="im-photo">
+              <a href={m.url} target="_blank" rel="noreferrer"><img src={m.url} alt="" loading="lazy" /></a>
+              <button className="x-btn" onClick={() => removeMedia(item.id, m.url)} aria-label="Remove photo">×</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="im-foot">
+        <button className="ghost-btn danger" onClick={() => { remove(item.id); ref.current.close() }}>Delete item</button>
+      </div>
+    </dialog>
+  )
+}
+
 export default function InboxPanel() {
-  const { items, loading, error, add, remove, update } = useInbox()
+  const { items, loading, error, add, remove, update, addMedia, removeMedia } = useInbox()
+  const [openId,     setOpenId]    = useState(null)
+  const openItem = items.find(i => i.id === openId)
   const [text,       setText]      = useState('')
   const [tag,        setTag]       = useState('general')
   const [adding,     setAdding]    = useState(false)
   const [saving,     setSaving]    = useState(false)
   const [saveError,  setSaveError] = useState(null)
-  const [editingId,  setEditingId] = useState(null)
-  const [editText,   setEditText]  = useState('')
 
   const inputRef = useCallback(node => { if (node) node.focus() }, [])
 
@@ -107,30 +232,31 @@ export default function InboxPanel() {
           return (
             <div key={item.id ?? i} className="inbox-item">
               <span className={`tag ${t.cls}`}>{t.label}</span>
-              {editingId === item.id ? (
-                <input
-                  className="inline-edit i-text"
-                  value={editText}
-                  onChange={e => setEditText(e.target.value)}
-                  onBlur={() => { update(item.id, editText); setEditingId(null) }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter')  { update(item.id, editText); setEditingId(null) }
-                    if (e.key === 'Escape') setEditingId(null)
-                  }}
-                  autoFocus
-                  onClick={e => e.stopPropagation()}
-                />
-              ) : (
-                <span
-                  className="i-text editable"
-                  onClick={() => { setEditText(item.text ?? ''); setEditingId(item.id) }}
-                >{item.text ?? '(no content)'}</span>
+              <button className="i-text i-open" onClick={() => setOpenId(item.id)}>
+                {item.text ?? '(no content)'}
+              </button>
+              {hasDetail(item) && (
+                <span className="i-badge" title={item.source !== 'manual' ? `from ${item.source}` : 'has details'}>
+                  {item.media?.length ? `▣ ${item.media.length}` : '≡'}
+                </span>
               )}
               <button className="x-btn" onClick={() => remove(item.id)} aria-label="Dismiss">×</button>
             </div>
           )
         })}
       </div>
+
+      {openItem && (
+        <InboxModal
+          key={openItem.id}
+          item={openItem}
+          onClose={() => setOpenId(null)}
+          update={update}
+          remove={remove}
+          addMedia={addMedia}
+          removeMedia={removeMedia}
+        />
+      )}
     </div>
   )
 }

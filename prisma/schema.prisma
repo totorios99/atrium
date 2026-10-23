@@ -8,10 +8,23 @@ datasource db {
 }
 
 model InboxItem {
-  id        Int      @id @default(autoincrement())
-  text      String
-  tag       String   @default("general")
-  createdAt DateTime @default(now())
+  id        Int          @id @default(autoincrement())
+  text      String       // subject line
+  tag       String       @default("general")
+  body      String?      // notes, plain text
+  meta      String?      // JSON: { dates?: [{label, date}], location?, links?: [] }
+  source    String       @default("manual") // "manual" | "hermes"
+  createdAt DateTime     @default(now())
+  media     InboxMedia[]
+}
+
+model InboxMedia {
+  id        Int       @id @default(autoincrement())
+  itemId    Int
+  item      InboxItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  file      String    // uuid filename inside MEDIA_DIR
+  mime      String
+  createdAt DateTime  @default(now())
 }
 
 model WeeklyItem {

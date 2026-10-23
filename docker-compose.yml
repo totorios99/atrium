@@ -8,6 +8,8 @@ services:
       - "3005:3005"
     environment:
       DATABASE_URL: "file:/data/cockpit.db"
+      # inbox photo uploads — same volume as the db
+      MEDIA_DIR: /data/inbox-media
       VAULT_ROOT: /vaults
     # Runs as antonio (1000:1000) so milestone toggles can write STATUS.md back
     # to the vault. The pillar vaults are owned 1000:1000; the container image

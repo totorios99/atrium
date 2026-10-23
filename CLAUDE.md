@@ -33,14 +33,15 @@ Next.js 16 App Router on **port 3005**. API routes live in `app/api/`. No separa
 | Vault status / projects | `<vault>/STATUS.md` (YAML frontmatter, read-only) | `GET /api/status` |
 | Habit checked state (daily) | SQLite `HabitHistory` | `GET /api/status`, `PATCH /api/status/[vaultId]` |
 | Habit history (7-day) | SQLite `HabitHistory` | `GET /api/habits/[vaultId]/history` |
-| Inbox items | SQLite `InboxItem` | `/api/inbox`, `/api/inbox/[id]` |
+| Inbox items | SQLite `InboxItem` (+ `InboxMedia`, files in `MEDIA_DIR`) | `/api/inbox`, `/api/inbox/[id]`, `/api/inbox/[id]/media`, `/api/inbox/media/[file]` |
 | Weekly checklist | SQLite `WeeklyItem` | `/api/weekly`, `/api/weekly/[index]` |
-| Pillar display order | SQLite `Setting` (key `priority_order`) | `/api/priority-order` |
+| Pinned priorities | SQLite `Setting` (key `priority_pins`) | `/api/priority-order` |
 
 ### Prisma schema (`prisma/schema.prisma`)
 
 ```prisma
-model InboxItem    { id, text, tag, createdAt }
+model InboxItem    { id, text, tag, body?, meta? (JSON str), source, createdAt, media[] }
+model InboxMedia   { id, itemId → InboxItem (cascade), file, mime, createdAt }
 model WeeklyItem   { id, weekKey, label, status, pos }
 model Setting      { key (PK), value }
 model HabitHistory { id, vaultId, date, habitKey, value — @@unique([vaultId, date, habitKey]) }
@@ -86,9 +87,9 @@ Bottom row (1fr 1fr, height 384px):    InboxPanel    | WeeklyPanel
 ```
 
 - No photo/polaroid widget
-- `PriorityPanel` — drag-to-reorder via Pointer Events + CSS transforms + `flushSync`; vault label opens Obsidian via `api.openVault()`; `next_move` inline-editable
+- `PriorityPanel` — max 5 rows (`+N more` toggle). Hides vaults with empty/placeholder `next_move`. Order: pinned (drag a row to pin it there) → auto: `blocked` → `next_move_scope` (today > this-week > someday) → oldest `last_updated`. Logic in `usePriorityOrder`. Vault label opens Obsidian; `next_move` inline-editable
 - `HabitPanel` — paginated (4 habits/page) with ‹/› nav; only today's pip is interactive, days 0–5 are display-only
-- `InboxPanel` — inline-edit item text; tags fixed `width: 66px` so titles align regardless of tag label length
+- `InboxPanel` — subject-only list; click opens `InboxModal` (native `<dialog>`: subject, meta dates/location/links, notes, photo grid + upload). Polls every 30 s (Hermes posts). Tags fixed `width: 66px`
 - `WeeklyPanel` — inline-edit checklist labels
 
 ### Animations (`app/globals.css`, end of file)

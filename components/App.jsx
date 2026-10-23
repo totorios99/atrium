@@ -85,7 +85,7 @@ function LoadingScreen() {
 
 export default function App() {
   const { statuses, loading, error, updateField } = useStatus()
-  const { sorted, order, reorder }                = usePriorityOrder(statuses)
+  const { sorted, pins, savePins }                = usePriorityOrder(statuses)
 
   if (loading) return <LoadingScreen />
 
@@ -95,7 +95,7 @@ export default function App() {
       <main className="shell">
         <Header error={error} />
         <section className="main-row">
-          <PriorityPanel statuses={sorted} onUpdate={updateField} order={order} onReorder={reorder} />
+          <PriorityPanel statuses={sorted} onUpdate={updateField} pins={pins} onPinsChange={savePins} />
           <ProjectPanel  statuses={statuses} onUpdate={updateField} />
           <HabitPanel    statuses={statuses} onUpdate={updateField} />
         </section>

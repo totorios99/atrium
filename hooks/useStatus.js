@@ -78,9 +78,14 @@ export function useInbox() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  // Hermes posts in the background — poll like useStatus
+  useEffect(() => {
+    const id = setInterval(load, POLL_INTERVAL)
+    return () => clearInterval(id)
+  }, [load])
 
   const add = useCallback(async (text, tag) => {
-    const optimistic = { id: `tmp-${Date.now()}`, text, tag, createdAt: new Date().toISOString() }
+    const optimistic = { id: `tmp-${Date.now()}`, text, tag, media: [], createdAt: new Date().toISOString() }
     setItems(prev => [optimistic, ...prev])
     try {
       const real = await api.addInboxItem(text, tag)
@@ -102,17 +107,34 @@ export function useInbox() {
     }
   }, [items])
 
-  const update = useCallback(async (id, text) => {
+  // patch = { text } | { body }
+  const update = useCallback(async (id, patch) => {
     const prev = items
-    setItems(curr => curr.map(i => i.id === id ? { ...i, text } : i))
+    setItems(curr => curr.map(i => i.id === id ? { ...i, ...patch } : i))
     try {
-      await api.updateInboxItem(id, text)
+      await api.updateInboxItem(id, patch)
     } catch {
       setItems(prev)
     }
   }, [items])
 
-  return { items, loading, error, add, remove, update }
+  const addMedia = useCallback(async (id, files) => {
+    try {
+      const created = await api.uploadInboxMedia(id, files)
+      setItems(curr => curr.map(i => i.id === id ? { ...i, media: [...(i.media ?? []), ...created] } : i))
+      return { ok: true }
+    } catch (e) {
+      return { ok: false, error: e.message }
+    }
+  }, [])
+
+  const removeMedia = useCallback(async (id, url) => {
+    const prev = items
+    setItems(curr => curr.map(i => i.id === id ? { ...i, media: i.media.filter(m => m.url !== url) } : i))
+    try { await api.deleteInboxMedia(url) } catch { setItems(prev) }
+  }, [items])
+
+  return { items, loading, error, add, remove, update, addMedia, removeMedia }
 }
 
 export function useWeekly() {
@@ -163,32 +185,36 @@ export function useWeekly() {
   return { data, loading, cycleItem, updateLabel }
 }
 
+// next_move values that mean "nothing to do yet" — hidden from Active Priorities
+const PLACEHOLDERS = ['no next_move set', 'write the first note in this vault']
+const SCOPE_RANK   = { today: 0, 'this-week': 1, someday: 2 }
+
+const actionable = s =>
+  s._found && s.next_move?.trim() && !PLACEHOLDERS.includes(s.next_move.trim().toLowerCase())
+
+// blocked → scope (today first) → oldest last_updated first
+function autoCompare(a, b) {
+  return (!!b.blocked - !!a.blocked)
+    || ((SCOPE_RANK[a.next_move_scope] ?? 1) - (SCOPE_RANK[b.next_move_scope] ?? 1))
+    || String(a.last_updated || '').localeCompare(String(b.last_updated || ''))
+}
+
+// pinned rows (user-dragged) on top in pin order, rest auto-sorted
 export function usePriorityOrder(statuses) {
-  const [order, setOrder] = useState([])
-  const vaultIds = statuses.map(s => s.vault_id).join()
+  const [pins, setPins] = useState([])
 
   useEffect(() => {
-    if (!statuses.length) return
-    api.getPriorityOrder()
-      .then(({ order: saved = [] }) => {
-        const ids    = statuses.map(s => s.vault_id)
-        const merged = [
-          ...saved.filter(id => ids.includes(id)),
-          ...ids.filter(id => !saved.includes(id)),
-        ]
-        setOrder(merged)
-      })
-      .catch(() => { setOrder(statuses.map(s => s.vault_id)) })
-  }, [vaultIds])
-
-  const reorder = useCallback(async (newOrder) => {
-    setOrder(newOrder)
-    try { await api.savePriorityOrder(newOrder) } catch { /* reverts on next load */ }
+    api.getPriorityOrder().then(({ order = [] }) => setPins(order)).catch(() => {})
   }, [])
 
-  const sorted = order.length
-    ? order.map(id => statuses.find(s => s.vault_id === id)).filter(Boolean)
-    : statuses
+  const savePins = useCallback(async (next) => {
+    setPins(next)
+    try { await api.savePriorityOrder(next) } catch { /* reverts on next load */ }
+  }, [])
 
-  return { sorted, order, reorder }
+  const rows   = statuses.filter(actionable)
+  const pinned = pins.map(id => rows.find(s => s.vault_id === id)).filter(Boolean)
+  const rest   = rows.filter(s => !pins.includes(s.vault_id)).sort(autoCompare)
+
+  return { sorted: [...pinned, ...rest], pins, savePins }
 }

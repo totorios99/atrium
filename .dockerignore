@@ -6,3 +6,4 @@ src/
 *.log
 .env.local
 README.md
+prisma/inbox-media

@@ -25,6 +25,26 @@ Everything vault-related lives in `vault.config.js` — vault ids, labels, paths
 
 See `CLAUDE.md` for the full architecture/data-flow breakdown.
 
+## Inbox API (Hermes)
+
+Items show only their subject in the Inbox panel; clicking opens a detail modal (notes, dates, links, photos).
+
+```bash
+# create — body, meta and source are optional
+curl -X POST http://atrium.lab:3005/api/inbox -H 'content-type: application/json' -d '{
+  "text": "Tlaquepaque with Lesslie",
+  "tag": "travel",
+  "body": "free-text notes",
+  "meta": { "dates": [{ "label": "window", "date": "Oct 25 → Nov 2" }], "location": "Tlaquepaque", "links": ["https://…"] },
+  "source": "hermes"
+}'                                   # → { id, … }
+
+# attach photos (jpeg/png/webp/gif/avif/heic, ≤10 MB each; repeat -F per file)
+curl -F file=@photo.jpg http://atrium.lab:3005/api/inbox/<id>/media
+```
+
+Photos live in `MEDIA_DIR` (`/data/inbox-media` in Docker, same volume as the DB). No auth — LAN only, like the rest of the app.
+
 ## Deploy
 
 `Dockerfile` builds a standalone Next.js image; `docker-compose.yml` mounts the vaults read-only and persists the SQLite file on a named volume.

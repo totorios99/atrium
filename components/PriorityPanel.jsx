@@ -52,9 +52,14 @@ const VAULT_COLOR = {
   homelab:      'p-azure',
 }
 
-function colorClass(vaultId) {
-  return VAULT_COLOR[vaultId?.toLowerCase()] ?? 'p-azure'
+// vaults outside the 4-hue palette use their vault.config.js color
+function accentProps(s) {
+  const cls = VAULT_COLOR[s.vault_id?.toLowerCase()]
+  if (cls || !s.vault_color) return { className: cls ?? 'p-azure' }
+  return { className: '', style: { '--accent': s.vault_color, '--accent-soft': s.vault_color } }
 }
+
+const MAX_ROWS = 5
 
 // move item from index `from` to index `to`, return new array
 function move(arr, from, to) {
@@ -69,7 +74,21 @@ const EASE = 'cubic-bezier(.2,.8,.2,1)'
 // snappy slide for rows pushed aside by the dragged item
 const SHIFT_TRANSITION = 'transform .17s cubic-bezier(.22,.61,.36,1)'
 
-export default function PriorityPanel({ statuses, onUpdate, order, onReorder }) {
+export default function PriorityPanel({ statuses, onUpdate, pins, onPinsChange }) {
+  const [showAll, setShowAll] = useState(false)
+  const visible = showAll ? statuses : statuses.slice(0, MAX_ROWS)
+  const hidden  = statuses.length - visible.length
+
+  // dropping a row pins it there; rows above it get pinned too so its slot holds
+  function commitDrop(target, draggedId) {
+    const lastPinned = Math.max(
+      target.indexOf(draggedId),
+      ...target.map((id, i) => (pins.includes(id) ? i : -1)),
+    )
+    const head = target.slice(0, lastPinned + 1)
+    onPinsChange([...head, ...pins.filter(id => !head.includes(id))])
+  }
+
   const containerRef = useRef(null)
   const rowRefs = useRef(new Map())   // vault_id -> element
   const drag = useRef(null)           // live drag state, no re-render during move
@@ -87,7 +106,7 @@ export default function PriorityPanel({ statuses, onUpdate, order, onReorder }) 
     if (!draggedEl || !containerRef.current) return
 
     // base order = current visual order (DOM matches statuses)
-    const baseOrder = statuses.map(s => s.vault_id)
+    const baseOrder = visible.map(s => s.vault_id)
     const fromIndex = baseOrder.indexOf(vaultId)
 
     // snapshot each row's center in viewport coords (pre-drag layout)
@@ -166,7 +185,7 @@ export default function PriorityPanel({ statuses, onUpdate, order, onReorder }) 
         // transformed-old-order == untransformed-new-order → invisible handoff.
         const els = d.baseOrder.map(id => rowRefs.current.get(id)).filter(Boolean)
         for (const el of els) el.style.transition = 'none'
-        flushSync(() => onReorder(target))   // DOM reorders now, synchronously
+        flushSync(() => commitDrop(target, d.vaultId))   // DOM reorders now, synchronously
         for (const el of els) { el.style.transform = ''; el.style.zIndex = '' }
         // force reflow so the cleared transforms apply before transitions return
         if (containerRef.current) void containerRef.current.offsetHeight
@@ -187,7 +206,7 @@ export default function PriorityPanel({ statuses, onUpdate, order, onReorder }) 
         <div className="card-head">
           <div className="card-label head-amethyst"><span className="dot" />Active Priorities</div>
         </div>
-        <p style={{ fontSize: '13px', color: 'var(--ink-faint)' }}>No vaults connected. Check vault.config.js</p>
+        <p style={{ fontSize: '13px', color: 'var(--ink-faint)' }}>Nothing actionable — no vault has a next_move set.</p>
       </div>
     )
   }
@@ -196,15 +215,19 @@ export default function PriorityPanel({ statuses, onUpdate, order, onReorder }) 
     <div className="glass card">
       <div className="card-head">
         <div className="card-label head-amethyst"><span className="dot" />Active Priorities</div>
-        <span className="reorder-hint">drag to reorder</span>
+        <span className="reorder-hint">drag to pin</span>
       </div>
       <div ref={containerRef} className="card-scroll">
-        {statuses.map(s => (
+        {visible.map(s => {
+          const accent = accentProps(s)
+          const pinned = pins.includes(s.vault_id)
+          return (
           <div
             key={s.vault_id}
             ref={el => setRow(s.vault_id, el)}
             data-vault-id={s.vault_id}
-            className={`priority ${colorClass(s.vault_id)}`}
+            className={`priority ${accent.className}${s.blocked ? ' blocked' : ''}`}
+            style={accent.style}
           >
             <span
               className="p-label"
@@ -213,6 +236,14 @@ export default function PriorityPanel({ statuses, onUpdate, order, onReorder }) 
                 api.openVault(s.vault_name || s.vault_id).catch(() => {})
               }}
             >{s.vault_label || s.vault_id}</span>
+            {pinned && (
+              <button
+                className="pin-btn"
+                title="Pinned — click to unpin"
+                aria-label={`Unpin ${s.vault_label || s.vault_id}`}
+                onClick={() => onPinsChange(pins.filter(id => id !== s.vault_id))}
+              >pinned ×</button>
+            )}
             <EditableField
               value={s.next_move}
               className="p-text"
@@ -220,7 +251,11 @@ export default function PriorityPanel({ statuses, onUpdate, order, onReorder }) 
               placeholder="No next_move set"
               onSave={val => onUpdate(s.vault_id, 'next_move', val)}
             />
-            {s.focus_area && <div className="p-sub">{s.focus_area}</div>}
+            {(s.blocked || s.focus_area) && (
+              <div className="p-sub">
+                {s.blocked ? `blocked: ${s.blocked_reason || '?'}` : s.focus_area}
+              </div>
+            )}
             <button
               className="drag-handle"
               aria-label={`Drag to reorder ${s.vault_label || s.vault_id}`}
@@ -236,7 +271,13 @@ export default function PriorityPanel({ statuses, onUpdate, order, onReorder }) 
               </svg>
             </button>
           </div>
-        ))}
+          )
+        })}
+        {(hidden > 0 || showAll) && statuses.length > MAX_ROWS && (
+          <button className="more-btn" onClick={() => setShowAll(v => !v)}>
+            {showAll ? 'show less' : `+${hidden} more`}
+          </button>
+        )}
       </div>
     </div>
   )
