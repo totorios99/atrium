@@ -153,34 +153,31 @@ export function useWeekly() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  // done items expire from the list 24 h after completion — poll so it clears on its own
+  useEffect(() => {
+    const id = setInterval(load, POLL_INTERVAL)
+    return () => clearInterval(id)
+  }, [load])
 
-  const cycleItem = useCallback(async (index) => {
-    if (!data?.items?.[index]) return
-    const current = data.items[index].status
-    const next    = WEEKLY_CYCLE[(WEEKLY_CYCLE.indexOf(current) + 1) % WEEKLY_CYCLE.length]
-    setData(prev => ({
-      ...prev,
-      items: prev.items.map((item, i) => i === index ? { ...item, status: next } : item),
-    }))
-    try {
-      await api.updateWeeklyItem(index, next)
-    } catch {
-      load()
-    }
+  const patchItem = (id, patch) => setData(prev => ({
+    ...prev,
+    items: prev.items.map(item => item.id === id ? { ...item, ...patch } : item),
+  }))
+
+  const cycleItem = useCallback(async (id) => {
+    const item = data?.items?.find(i => i.id === id)
+    if (!item) return
+    const next = WEEKLY_CYCLE[(WEEKLY_CYCLE.indexOf(item.status) + 1) % WEEKLY_CYCLE.length]
+    patchItem(id, { status: next })
+    try { await api.updateWeeklyItem(id, next) } catch { /* fall through to reload */ }
+    load()   // refresh counts + archive
   }, [data, load])
 
-  const updateLabel = useCallback(async (index, label) => {
-    if (!data?.items?.[index]) return
-    setData(prev => ({
-      ...prev,
-      items: prev.items.map((item, i) => i === index ? { ...item, label } : item),
-    }))
-    try {
-      await api.updateWeeklyLabel(index, label)
-    } catch {
-      load()
-    }
-  }, [data, load])
+  const updateLabel = useCallback(async (id, label) => {
+    if (!label.trim()) return
+    patchItem(id, { label })
+    try { await api.updateWeeklyLabel(id, label) } catch { load() }
+  }, [load])
 
   return { data, loading, cycleItem, updateLabel }
 }

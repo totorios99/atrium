@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useEffect } from 'react'
 import { api } from '@/utils/api.js'
+import Pager from './Pager.jsx'
 
 // keys must match vault ids in vault.config.js
 const VAULT_CLASS = {
@@ -75,19 +76,13 @@ export default function HabitPanel({ statuses, onUpdate }) {
     <div className="glass card habits-card">
       <div className="card-head">
         <div className="card-label head-jade"><span className="dot" />Daily Habits</div>
-        {totalPages > 1 && (
-          <div className="page-nav">
-            <button className="page-btn" disabled={safePage === 0} onClick={() => setPage(p => p - 1)} aria-label="Previous">‹</button>
-            <span className="page-num">{safePage + 1} / {totalPages}</span>
-            <button className="page-btn" disabled={safePage === totalPages - 1} onClick={() => setPage(p => p + 1)} aria-label="Next">›</button>
-          </div>
-        )}
       </div>
-      <div key={safePage} className="fade-up">
+      <div key={safePage} className="fade-up" style={{ flex: 1, minHeight: 0 }}>
         {pageHabits.map(h => (
           <HabitRow key={`${h.vaultId}-${h.key}`} habit={h} onToggle={toggle} />
         ))}
       </div>
+      <Pager page={safePage} total={totalPages} onChange={setPage} />
     </div>
   )
 }

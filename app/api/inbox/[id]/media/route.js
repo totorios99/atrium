@@ -18,11 +18,11 @@ export async function POST(req, { params }) {
     if (f.size > MAX_BYTES) return NextResponse.json({ error: 'file > 10 MB' }, { status: 413 })
   }
 
-  await fs.mkdir(MEDIA_DIR, { recursive: true })
+  await fs.mkdir(/*turbopackIgnore: true*/ MEDIA_DIR, { recursive: true })
   const created = []
   for (const f of files) {
     const file = `${randomUUID()}.${MIME_EXT[f.type]}`
-    await fs.writeFile(path.join(MEDIA_DIR, file), Buffer.from(await f.arrayBuffer()))
+    await fs.writeFile(path.join(/*turbopackIgnore: true*/ MEDIA_DIR, file), Buffer.from(await f.arrayBuffer()))
     const m = await prisma.inboxMedia.create({ data: { itemId: item.id, file, mime: f.type } })
     created.push({ id: m.id, mime: m.mime, url: `/api/inbox/media/${file}` })
   }

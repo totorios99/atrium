@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import Pager from './Pager.jsx'
 
 const VAULT_VARS = {
   cybersecurity: { color: 'hsl(var(--coral))', bg: 'hsl(var(--coral)/.16)', border: 'hsl(var(--coral)/.3)', pct: 'hsl(var(--coral))' },
@@ -120,16 +121,7 @@ export default function ProjectPanel({ statuses, onUpdate }) {
         )}
       </div>
 
-      {projects.length > 1 && (
-        <div style={{ display: 'flex', gap: 6, marginTop: 18, justifyContent: 'center' }}>
-          {projects.map((_, i) => (
-            <button key={i} onClick={() => setPage(i)} style={{
-              width: 6, height: 6, borderRadius: '50%', padding: 0, border: 'none', cursor: 'pointer',
-              background: i === page ? v.color : 'var(--ink-ghost)', transition: 'background .2s ease',
-            }} />
-          ))}
-        </div>
-      )}
+      <Pager page={Math.min(page, projects.length - 1)} total={projects.length} onChange={setPage} accent={v.color} />
     </div>
   )
 }

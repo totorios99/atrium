@@ -28,11 +28,12 @@ model InboxMedia {
 }
 
 model WeeklyItem {
-  id      Int    @id @default(autoincrement())
-  weekKey String
-  label   String
-  status  String @default("pending")
-  pos     Int    @default(0)
+  id          Int       @id @default(autoincrement())
+  weekKey     String
+  label       String
+  status      String    @default("pending")
+  pos         Int       @default(0)
+  completedAt DateTime? // set when status → done; item leaves the list 24 h later (stays in archive)
 }
 
 model Setting {

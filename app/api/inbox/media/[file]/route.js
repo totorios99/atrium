@@ -10,7 +10,7 @@ export async function GET(_req, { params }) {
   const row = await prisma.inboxMedia.findFirst({ where: { file } })
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   try {
-    const buf = await fs.readFile(path.join(MEDIA_DIR, file))
+    const buf = await fs.readFile(path.join(/*turbopackIgnore: true*/ MEDIA_DIR, file))
     return new NextResponse(buf, {
       headers: {
         'Content-Type': row.mime,
@@ -29,6 +29,6 @@ export async function DELETE(_req, { params }) {
   const row = await prisma.inboxMedia.findFirst({ where: { file } })
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   await prisma.inboxMedia.delete({ where: { id: row.id } })
-  await fs.unlink(path.join(MEDIA_DIR, file)).catch(() => {})
+  await fs.unlink(path.join(/*turbopackIgnore: true*/ MEDIA_DIR, file)).catch(() => {})
   return NextResponse.json({ ok: true })
 }

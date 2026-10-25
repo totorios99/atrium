@@ -22,28 +22,69 @@ const fmtDate = iso => new Date(iso).toLocaleDateString(undefined, { day: 'numer
 
 const hasDetail = i => !!(i.body || i.meta || i.media?.length)
 
-// mail-style detail view: subject, dates, notes, photos
+const EXIT_MS = 220   // matches .inbox-modal close transition
+
+// full-screen photo viewer — its own modal <dialog> so it sits in the top layer
+// (a fixed child of the glass modal would be clipped by its backdrop-filter)
+function PhotoViewer({ media, index, onIndex, onClose }) {
+  const ref  = useRef(null)
+  const step = d => onIndex((index + d + media.length) % media.length)
+  useEffect(() => { ref.current?.showModal() }, [])
+  return (
+    <dialog
+      ref={ref}
+      className="im-viewer"
+      onClose={onClose}
+      onClick={() => ref.current.close()}
+      onKeyDown={e => {
+        if (e.key === 'ArrowLeft')  step(-1)
+        if (e.key === 'ArrowRight') step(1)
+      }}
+    >
+      <img key={media[index].url} src={media[index].url} alt="" onClick={e => e.stopPropagation()} />
+      {media.length > 1 && (
+        <>
+          <button className="im-nav prev" onClick={e => { e.stopPropagation(); step(-1) }} aria-label="Previous photo">‹</button>
+          <button className="im-nav next" onClick={e => { e.stopPropagation(); step(1) }} aria-label="Next photo">›</button>
+        </>
+      )}
+      <span className="im-count">{index + 1} / {media.length}</span>
+    </dialog>
+  )
+}
+
+// mail-style detail view. Opens read-only; "Edit" unlocks subject, notes, photos, delete.
 function InboxModal({ item, onClose, update, remove, addMedia, removeMedia }) {
   const ref = useRef(null)
+  const [editing,   setEditing]   = useState(false)
   const [subject,   setSubject]   = useState(item.text ?? '')
   const [notes,     setNotes]     = useState(item.body ?? '')
+  const [viewer,    setViewer]    = useState(null)   // index of photo shown full-size
   const [uploading, setUploading] = useState(false)
   const [upError,   setUpError]   = useState(null)
 
-  useEffect(() => { ref.current?.showModal() }, [])
+  useEffect(() => {
+    ref.current?.showModal()
+    ref.current?.focus()   // focus the sheet, not the first button (no stray focus ring)
+  }, [])
 
-  const t     = tagInfo(item.tag)
-  const meta  = item.meta ?? {}
-  const dates = Array.isArray(meta.dates) ? meta.dates : []
-  const links = Array.isArray(meta.links) ? meta.links : []
-  const saved = typeof item.id === 'number'   // optimistic tmp items can't take edits yet
+  const t      = tagInfo(item.tag)
+  const meta   = item.meta ?? {}
+  const dates  = Array.isArray(meta.dates) ? meta.dates : []
+  const links  = (Array.isArray(meta.links) ? meta.links : [])
+    .map(l => (typeof l === 'string' ? { url: l } : l))
+    .filter(l => /^https?:\/\//.test(l?.url ?? ''))          // http(s) only
+  const media  = item.media ?? []
+  const saved  = typeof item.id === 'number'                 // optimistic tmp items can't be edited yet
 
-  const saveSubject = () => {
+  const saveEdits = () => {
     const v = subject.trim()
     if (v && v !== item.text) update(item.id, { text: v })
     else setSubject(item.text ?? '')
+    if (notes !== (item.body ?? '')) update(item.id, { body: notes })
   }
-  const saveNotes = () => { if (notes !== (item.body ?? '')) update(item.id, { body: notes }) }
+  const close      = () => ref.current?.close()
+  const toggleEdit = () => { if (editing) saveEdits(); setEditing(e => !e) }
 
   const onFiles = async e => {
     const files = [...e.target.files]
@@ -59,21 +100,34 @@ function InboxModal({ item, onClose, update, remove, addMedia, removeMedia }) {
     <dialog
       ref={ref}
       className="inbox-modal glass"
-      onClose={onClose}
-      onClick={e => { if (e.target === ref.current) ref.current.close() }}
+      onClose={e => {
+        if (e.target !== ref.current) return   // React bubbles the nested PhotoViewer's close up here
+        if (editing) saveEdits()
+        setTimeout(onClose, EXIT_MS)
+      }}
+      tabIndex={-1}
+      onClick={e => { if (e.target === ref.current) close() }}
     >
       <div className="im-head">
         <span className={`tag ${t.cls}`}>{t.label}</span>
-        <input
-          className="im-subject"
-          value={subject}
-          onChange={e => setSubject(e.target.value)}
-          onBlur={saveSubject}
-          onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-          disabled={!saved}
-          aria-label="Subject"
-        />
-        <button className="x-btn" onClick={() => ref.current.close()} aria-label="Close">×</button>
+        {editing ? (
+          <input
+            className="im-subject"
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') toggleEdit() }}
+            aria-label="Subject"
+            autoFocus
+          />
+        ) : (
+          <h2 className="im-subject">{item.text}</h2>
+        )}
+        {saved && (
+          <button className={`ghost-btn${editing ? ' active' : ''}`} onClick={toggleEdit}>
+            {editing ? 'Done' : 'Edit'}
+          </button>
+        )}
+        <button className="x-btn" onClick={close} aria-label="Close">×</button>
       </div>
 
       <div className="im-meta">
@@ -90,51 +144,65 @@ function InboxModal({ item, onClose, update, remove, addMedia, removeMedia }) {
         </ul>
       )}
 
-      <div className="field-label">Notes</div>
-      <textarea
-        className="im-notes"
-        value={notes}
-        onChange={e => setNotes(e.target.value)}
-        onBlur={saveNotes}
-        placeholder="Add notes…"
-        disabled={!saved}
-        rows={5}
-      />
+      {editing ? (
+        <>
+          <div className="field-label">Notes</div>
+          <textarea
+            className="im-notes"
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Add notes…"
+            rows={5}
+          />
+        </>
+      ) : item.body ? (
+        <p className="im-body">{item.body}</p>
+      ) : null}
 
       {links.length > 0 && (
         <ul className="im-links">
-          {links.map((l, i) => {
-            const href = typeof l === 'string' ? l : l?.url
-            if (!/^https?:\/\//.test(href ?? '')) return null   // http(s) only
-            return <li key={i}><a href={href} target="_blank" rel="noreferrer">{l.label || href}</a></li>
-          })}
+          {links.map((l, i) => (
+            <li key={i}><a href={l.url} target="_blank" rel="noreferrer">{l.label || l.url}</a></li>
+          ))}
         </ul>
       )}
 
-      <div className="im-photos-head">
-        <div className="field-label">Photos{item.media?.length ? ` · ${item.media.length}` : ''}</div>
-        {saved && (
-          <label className="ghost-btn">
-            {uploading ? 'uploading…' : '+ photo'}
-            <input type="file" accept="image/*" multiple hidden onChange={onFiles} disabled={uploading} />
-          </label>
-        )}
-      </div>
-      {upError && <p className="im-error">⚠ {upError}</p>}
-      {item.media?.length > 0 && (
-        <div className="im-photos">
-          {item.media.map(m => (
-            <div key={m.url} className="im-photo">
-              <a href={m.url} target="_blank" rel="noreferrer"><img src={m.url} alt="" loading="lazy" /></a>
-              <button className="x-btn" onClick={() => removeMedia(item.id, m.url)} aria-label="Remove photo">×</button>
-            </div>
-          ))}
+      {(media.length > 0 || editing) && (
+        <>
+          <div className="im-photos-head">
+            <div className="field-label">Photos{media.length ? ` · ${media.length}` : ''}</div>
+            {editing && (
+              <label className="ghost-btn">
+                {uploading ? 'uploading…' : '+ photo'}
+                <input type="file" accept="image/*" multiple hidden onChange={onFiles} disabled={uploading} />
+              </label>
+            )}
+          </div>
+          {upError && <p className="im-error">⚠ {upError}</p>}
+          <div className="im-photos">
+            {media.map((m, i) => (
+              <div key={m.url} className="im-photo">
+                <button className="im-thumb" onClick={() => setViewer(i)} aria-label={`View photo ${i + 1}`}>
+                  <img src={m.url} alt="" />
+                </button>
+                {editing && (
+                  <button className="x-btn" onClick={() => removeMedia(item.id, m.url)} aria-label="Remove photo">×</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {editing && (
+        <div className="im-foot">
+          <button className="ghost-btn danger" onClick={() => { remove(item.id); close() }}>Delete item</button>
         </div>
       )}
 
-      <div className="im-foot">
-        <button className="ghost-btn danger" onClick={() => { remove(item.id); ref.current.close() }}>Delete item</button>
-      </div>
+      {viewer !== null && media[viewer] && (
+        <PhotoViewer media={media} index={viewer} onIndex={setViewer} onClose={() => setViewer(null)} />
+      )}
     </dialog>
   )
 }
@@ -230,17 +298,22 @@ export default function InboxPanel() {
         {items.map((item, i) => {
           const t = tagInfo(item.tag)
           return (
-            <div key={item.id ?? i} className="inbox-item">
+            <div
+              key={item.id ?? i}
+              className="inbox-item"
+              role="button"
+              tabIndex={0}
+              onClick={() => setOpenId(item.id)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenId(item.id) } }}
+            >
               <span className={`tag ${t.cls}`}>{t.label}</span>
-              <button className="i-text i-open" onClick={() => setOpenId(item.id)}>
-                {item.text ?? '(no content)'}
-              </button>
+              <span className="i-text">{item.text ?? '(no content)'}</span>
               {hasDetail(item) && (
                 <span className="i-badge" title={item.source !== 'manual' ? `from ${item.source}` : 'has details'}>
                   {item.media?.length ? `▣ ${item.media.length}` : '≡'}
                 </span>
               )}
-              <button className="x-btn" onClick={() => remove(item.id)} aria-label="Dismiss">×</button>
+              <button className="x-btn" onClick={e => { e.stopPropagation(); remove(item.id) }} aria-label="Dismiss">×</button>
             </div>
           )
         })}

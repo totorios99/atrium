@@ -34,7 +34,7 @@ Next.js 16 App Router on **port 3005**. API routes live in `app/api/`. No separa
 | Habit checked state (daily) | SQLite `HabitHistory` | `GET /api/status`, `PATCH /api/status/[vaultId]` |
 | Habit history (7-day) | SQLite `HabitHistory` | `GET /api/habits/[vaultId]/history` |
 | Inbox items | SQLite `InboxItem` (+ `InboxMedia`, files in `MEDIA_DIR`) | `/api/inbox`, `/api/inbox/[id]`, `/api/inbox/[id]/media`, `/api/inbox/media/[file]` |
-| Weekly checklist | SQLite `WeeklyItem` | `/api/weekly`, `/api/weekly/[index]` |
+| Weekly checklist + archive | SQLite `WeeklyItem` | `/api/weekly`, `PATCH /api/weekly/[id]` |
 | Pinned priorities | SQLite `Setting` (key `priority_pins`) | `/api/priority-order` |
 
 ### Prisma schema (`prisma/schema.prisma`)
@@ -42,7 +42,7 @@ Next.js 16 App Router on **port 3005**. API routes live in `app/api/`. No separa
 ```prisma
 model InboxItem    { id, text, tag, body?, meta? (JSON str), source, createdAt, media[] }
 model InboxMedia   { id, itemId → InboxItem (cascade), file, mime, createdAt }
-model WeeklyItem   { id, weekKey, label, status, pos }
+model WeeklyItem   { id, weekKey, label, status, pos, completedAt? }
 model Setting      { key (PK), value }
 model HabitHistory { id, vaultId, date, habitKey, value — @@unique([vaultId, date, habitKey]) }
 ```
@@ -54,7 +54,7 @@ model HabitHistory { id, vaultId, date, habitKey, value — @@unique([vaultId, d
 - **STATUS.md is read-only**: Obsidian owns these files. The app never writes to them except non-habit field edits via PATCH. Habit keys come from STATUS.md; their daily checked state lives in SQLite `HabitHistory`.
 - **Habit merge**: `GET /api/status` calls `statusWithHabits()` — reads STATUS.md for habit keys, overlays today's SQLite rows. If no rows for today, all habits return `false` (auto-reset by absence).
 - **Habit write**: `PATCH /api/status/[vaultId]` with `habits.*` keys upserts into `HabitHistory`; non-habit keys go to STATUS.md via dot-notation (`setNested()` from `utils/shared.js`).
-- **Weekly rows are per-week**: `GET /api/weekly` looks up rows for the current ISO week key and creates them from `defaultWeeklyItems()` if missing — no reset logic, old weeks' rows just stay in the table.
+- **Weekly rows are per-week**: `GET /api/weekly` looks up rows for the current ISO week key and creates them from `defaultWeeklyItems()` if missing. Marking `done` stamps `completedAt`; done rows drop out of `items` 24 h later but stay in `archive` (all weeks, newest first). Rows are addressed by id, not index.
 - **Open vault**: `POST /api/open-vault` validates vault name (`/^[\w\-. ]+$/`) and runs `execFile('xdg-open', ['obsidian://open?vault=NAME'])` server-side.
 
 ### Shared modules
@@ -88,9 +88,10 @@ Bottom row (1fr 1fr, height 384px):    InboxPanel    | WeeklyPanel
 
 - No photo/polaroid widget
 - `PriorityPanel` — max 5 rows (`+N more` toggle). Hides vaults with empty/placeholder `next_move`. Order: pinned (drag a row to pin it there) → auto: `blocked` → `next_move_scope` (today > this-week > someday) → oldest `last_updated`. Logic in `usePriorityOrder`. Vault label opens Obsidian; `next_move` inline-editable
-- `HabitPanel` — paginated (4 habits/page) with ‹/› nav; only today's pip is interactive, days 0–5 are display-only
-- `InboxPanel` — subject-only list; click opens `InboxModal` (native `<dialog>`: subject, meta dates/location/links, notes, photo grid + upload). Polls every 30 s (Hermes posts). Tags fixed `width: 66px`
-- `WeeklyPanel` — inline-edit checklist labels
+- `HabitPanel` — paginated (4 habits/page); only today's pip is interactive, days 0–5 are display-only
+- `ProjectPanel` / `HabitPanel` paginate with shared `Pager.jsx` (iOS chevrons + dots) pinned to the card bottom
+- `InboxPanel` — subject-only list; clicking a row opens `InboxModal` (native `<dialog>`) **read-only**; "Edit" unlocks subject, notes, photo add/remove and delete. Photos open in `PhotoViewer`, a separate top-layer `<dialog>` (← → Esc). Polls every 30 s (Hermes posts). Tags fixed `width: 66px`
+- `WeeklyPanel` — inline-edit checklist labels; `archive` toggle lists completed items with dates
 
 ### Animations (`app/globals.css`, end of file)
 
