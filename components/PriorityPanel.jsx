@@ -2,7 +2,6 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { flushSync } from 'react-dom'
-import { api } from '@/utils/api.js'
 
 function EditableField({ value, className, emptyClass, placeholder, onSave }) {
   const [editing, setEditing] = useState(false)
@@ -229,13 +228,12 @@ export default function PriorityPanel({ statuses, onUpdate, pins, onPinsChange }
             className={`priority ${accent.className}${s.blocked ? ' blocked' : ''}`}
             style={accent.style}
           >
-            <span
+            {/* obsidian:// opens on the viewer's device; server-side xdg-open can't work from the container */}
+            <a
               className="p-label"
-              onClick={e => {
-                e.stopPropagation()
-                api.openVault(s.vault_name || s.vault_id).catch(() => {})
-              }}
-            >{s.vault_label || s.vault_id}</span>
+              href={`obsidian://open?vault=${encodeURIComponent(s.vault_name || s.vault_id)}`}
+              onClick={e => e.stopPropagation()}
+            >{s.vault_label || s.vault_id}</a>
             {pinned && (
               <button
                 className="pin-btn"

@@ -55,7 +55,7 @@ model HabitHistory { id, vaultId, date, habitKey, value — @@unique([vaultId, d
 - **Habit merge**: `GET /api/status` calls `statusWithHabits()` — reads STATUS.md for habit keys, overlays today's SQLite rows. If no rows for today, all habits return `false` (auto-reset by absence).
 - **Habit write**: `PATCH /api/status/[vaultId]` with `habits.*` keys upserts into `HabitHistory`; non-habit keys go to STATUS.md via dot-notation (`setNested()` from `utils/shared.js`).
 - **Weekly rows are per-week**: `GET /api/weekly` looks up rows for the current ISO week key and creates them from `defaultWeeklyItems()` if missing. Marking `done` stamps `completedAt`; done rows drop out of `items` 24 h later but stay in `archive` (all weeks, newest first). Rows are addressed by id, not index.
-- **Open vault**: `POST /api/open-vault` validates vault name (`/^[\w\-. ]+$/`) and runs `execFile('xdg-open', ['obsidian://open?vault=NAME'])` server-side.
+- **Open vault**: the vault label in `PriorityPanel` is an `<a href="obsidian://open?vault=<folder>">` — opens on the viewer's device (no server route; the container has no `xdg-open`).
 
 ### Shared modules
 
@@ -89,6 +89,7 @@ Bottom row (1fr 1fr, height 384px):    InboxPanel    | WeeklyPanel
 - No photo/polaroid widget
 - `PriorityPanel` — max 5 rows (`+N more` toggle). Hides vaults with empty/placeholder `next_move`. Order: pinned (drag a row to pin it there) → auto: `blocked` → `next_move_scope` (today > this-week > someday) → oldest `last_updated`. Logic in `usePriorityOrder`. Vault label opens Obsidian; `next_move` inline-editable
 - `HabitPanel` — paginated (4 habits/page); only today's pip is interactive, days 0–5 are display-only
+- `ProjectPanel` milestones: short pills (`label`, 1–2 words); hover/focus shows `desc` in a shared `.ms-desc` line under the pills (no popover — card `overflow:hidden` + `backdrop-filter` would clip it)
 - `ProjectPanel` / `HabitPanel` paginate with shared `Pager.jsx` (iOS chevrons + dots) pinned to the card bottom
 - `InboxPanel` — subject-only list; clicking a row opens `InboxModal` (native `<dialog>`) **read-only**; "Edit" unlocks subject, notes, photo add/remove and delete. Photos open in `PhotoViewer`, a separate top-layer `<dialog>` (← → Esc). Polls every 30 s (Hermes posts). Tags fixed `width: 66px`
 - `WeeklyPanel` — inline-edit checklist labels; `archive` toggle lists completed items with dates

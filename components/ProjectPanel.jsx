@@ -15,7 +15,8 @@ function vaultVars(vaultId) {
 }
 
 export default function ProjectPanel({ statuses, onUpdate }) {
-  const [page, setPage] = useState(0)
+  const [page, setPage]   = useState(0)
+  const [hover, setHover] = useState(null)   // milestone index under pointer/focus
 
   const projects = statuses
     .filter(s => s.project_status === 'active' && s.project_name)
@@ -96,10 +97,10 @@ export default function ProjectPanel({ statuses, onUpdate }) {
 
         <div className="field-label" style={{ marginBottom: 10 }}>
           Milestones{' '}
-          <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--ink-ghost)', fontSize: '10px' }}>· tap to complete</span>
+          <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--ink-ghost)', fontSize: '10px' }}>· hover for details · tap to complete</span>
         </div>
 
-        {project.milestones.length > 0 ? (
+        {project.milestones.length > 0 ? (<>
           <div className="chips">
             {project.milestones.map((m, i) => (
               <span
@@ -107,6 +108,11 @@ export default function ProjectPanel({ statuses, onUpdate }) {
                 className={`chip${m.done ? ' done' : ''}`}
                 role="button"
                 tabIndex={0}
+                aria-description={m.desc || undefined}
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover(null)}
+                onFocus={() => setHover(i)}
+                onBlur={() => setHover(null)}
                 onClick={() => toggleMilestone(project.vaultId, project.milestones, i)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMilestone(project.vaultId, project.milestones, i) } }}
               >
@@ -114,14 +120,18 @@ export default function ProjectPanel({ statuses, onUpdate }) {
               </span>
             ))}
           </div>
-        ) : (
+          {/* ponytail: one shared line instead of per-chip tooltips — card overflow:hidden + backdrop-filter clip popovers */}
+          <div className={`ms-desc${hover != null ? ' on' : ''}`}>
+            {hover != null && (project.milestones[hover]?.desc || project.milestones[hover]?.label)}
+          </div>
+        </>) : (
           <p style={{ fontSize: '12px', color: 'var(--ink-faint)', fontFamily: '"JetBrains Mono",monospace' }}>
             Add <code>project_milestones:</code> to STATUS.md
           </p>
         )}
       </div>
 
-      <Pager page={Math.min(page, projects.length - 1)} total={projects.length} onChange={setPage} accent={v.color} />
+      <Pager page={Math.min(page, projects.length - 1)} total={projects.length} onChange={p => { setHover(null); setPage(p) }} accent={v.color} />
     </div>
   )
 }

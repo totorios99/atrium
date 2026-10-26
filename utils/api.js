@@ -37,5 +37,4 @@ export const api = {
   updateWeeklyLabel:(id, label)          => request('PATCH',  `/weekly/${id}`, { label }),
   getPriorityOrder: ()                   => request('GET',    '/priority-order'),
   savePriorityOrder:(order)              => request('PATCH',  '/priority-order', { order }),
-  openVault:        (vault)              => request('POST',   '/open-vault', { vault }),
 }
