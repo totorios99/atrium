@@ -29,6 +29,7 @@ services:
       - ${HOME}/Documents/The Alchemist's Atrium/webdev-brain:/vaults/webdev-brain
       - ${HOME}/Documents/The Alchemist's Atrium/travel-brain:/vaults/travel-brain
       - ${HOME}/Documents/The Alchemist's Atrium/coffee-brain:/vaults/coffee-brain
+      - ${HOME}/Documents/The Alchemist's Atrium/photography-brain:/vaults/photography-brain
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3005/api/health"]

@@ -72,6 +72,12 @@ export const config = {
       path:  join(VAULT_ROOT, 'coffee-brain'),
       color: '#8B5A2B',
     },
+    {
+      id:    'photography',
+      label: 'Photography',
+      path:  join(VAULT_ROOT, 'photography-brain'),
+      color: '#06B6D4',
+    },
   ],
 
   // ── CENTRAL VAULT ──────────────────────────────────────────────────────────

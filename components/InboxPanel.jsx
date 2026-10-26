@@ -13,6 +13,7 @@ const TAGS = [
   { id: 'linux',        label: 'linux',   cls: 'tag-linux'   },
   { id: 'webdev',       label: 'web',     cls: 'tag-web'     },
   { id: 'coffee',       label: 'coffee',  cls: 'tag-coffee'  },
+  { id: 'photography',  label: 'photo',   cls: 'tag-photo'   },
   { id: 'branch',       label: 'branch',  cls: 'tag-branch'  },
 ]
 

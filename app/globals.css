@@ -680,6 +680,7 @@ body {
 .tag-linux  { --tag-bg: color-mix(in srgb, #D4A017 15%, transparent); --tag-fg: #D4A017; --tag-bd: color-mix(in srgb, #D4A017 30%, transparent); }
 .tag-web    { --tag-bg: color-mix(in srgb, #E879F9 15%, transparent); --tag-fg: #E879F9; --tag-bd: color-mix(in srgb, #E879F9 30%, transparent); }
 .tag-coffee { --tag-bg: color-mix(in srgb, #B07A4A 15%, transparent); --tag-fg: #B07A4A; --tag-bd: color-mix(in srgb, #B07A4A 30%, transparent); }
+.tag-photo  { --tag-bg: color-mix(in srgb, #06B6D4 15%, transparent); --tag-fg: #06B6D4; --tag-bd: color-mix(in srgb, #06B6D4 30%, transparent); }
 
 .inbox-item {
   padding-left: 10px; padding-right: 10px; border-radius: 12px; cursor: pointer;

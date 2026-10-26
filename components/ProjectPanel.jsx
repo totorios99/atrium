@@ -4,14 +4,15 @@ import { useState, useCallback, useEffect } from 'react'
 import Pager from './Pager.jsx'
 
 const VAULT_VARS = {
-  cybersecurity: { color: 'hsl(var(--coral))', bg: 'hsl(var(--coral)/.16)', border: 'hsl(var(--coral)/.3)', pct: 'hsl(var(--coral))' },
+  cyber:         { color: 'hsl(var(--coral))', bg: 'hsl(var(--coral)/.16)', border: 'hsl(var(--coral)/.3)', pct: 'hsl(var(--coral))' },
   fitness:       { color: 'hsl(var(--jade))',  bg: 'hsl(var(--jade)/.16)',  border: 'hsl(var(--jade)/.3)',  pct: 'hsl(var(--jade))' },
   spirituality:  { color: 'hsl(var(--amethyst))', bg: 'hsl(var(--amethyst)/.16)', border: 'hsl(var(--amethyst)/.3)', pct: 'hsl(var(--amethyst))' },
   homelab:       { color: 'hsl(var(--azure))', bg: 'hsl(var(--azure)/.16)', border: 'hsl(var(--azure)/.3)', pct: 'hsl(var(--azure))' },
 }
 
-function vaultVars(vaultId) {
-  return VAULT_VARS[vaultId?.toLowerCase()] ?? VAULT_VARS.homelab
+// vaults without a theme entry derive from their vault.config.js hex
+function vaultVars(vaultId, hex = '#378ADD') {
+  return VAULT_VARS[vaultId?.toLowerCase()] ?? { color: hex, bg: `${hex}29`, border: `${hex}4d`, pct: hex }
 }
 
 export default function ProjectPanel({ statuses, onUpdate }) {
@@ -27,7 +28,7 @@ export default function ProjectPanel({ statuses, onUpdate }) {
         ? Math.round((doneMilestones / milestones.length) * 100)
         : Math.min(100, Math.max(0, Number(s.project_pct) || 0))
       return {
-        vaultId: s.vault_id, vaultLabel: s.vault_label || s.vault_id,
+        vaultId: s.vault_id, vaultColor: s.vault_color, vaultLabel: s.vault_label || s.vault_id,
         name: s.project_name, nextMove: s.project_next_move || s.next_move || '',
         pct, milestones, started: s.project_started || '',
       }
@@ -56,7 +57,7 @@ export default function ProjectPanel({ statuses, onUpdate }) {
     )
   }
 
-  const v = vaultVars(project.vaultId)
+  const v = vaultVars(project.vaultId, project.vaultColor)
 
   return (
     <div className="glass card">
