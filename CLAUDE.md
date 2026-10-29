@@ -36,6 +36,7 @@ Next.js 16 App Router on **port 3005**. API routes live in `app/api/`. No separa
 | Inbox items | SQLite `InboxItem` (+ `InboxMedia`, files in `MEDIA_DIR`) | `/api/inbox`, `/api/inbox/[id]`, `/api/inbox/[id]/media`, `/api/inbox/media/[file]` |
 | Weekly checklist + archive | SQLite `WeeklyItem` | `/api/weekly`, `PATCH /api/weekly/[id]` |
 | Pinned priorities | SQLite `Setting` (key `priority_pins`) | `/api/priority-order` |
+| Hype hero clips | `HYPE_DIR` (`/srv/media/hype`, `:ro` mount at `/hype`): `manifest.json` + `clips/<id>.mp4/.jpg`, written by homelab's `hype-add.sh` | `GET /api/hype/manifest.json`, `GET /api/hype/clips/<file>` (HTTP Range → 206, needed by Safari) |
 
 ### Prisma schema (`prisma/schema.prisma`)
 
@@ -81,12 +82,14 @@ SQLite           ↗
 ### Layout (`components/App.jsx`)
 
 ```
+HypeHero (full width, 34vh, outside .shell)
 Header (glass card):  [greeting / clock+date] | [gradient divider] | [QuoteWidget]
 Main row (1fr 1fr 1fr, height 486px):  PriorityPanel | ProjectPanel | HabitPanel
 Bottom row (1fr 1fr, height 384px):    InboxPanel    | WeeklyPanel
 ```
 
 - No photo/polaroid widget
+- `HypeHero` — motivational clip reel above the shell. Reads the manifest at runtime (new clips need no redeploy). Two layers swap: front plays, back preloads the next clip; crossfade starts `FADE_S` before the end. Each clip renders at native aspect (never cropped — subtitles/heads sit at edges) with feathered sides over a blurred poster. Scroll fades/scales it via `--hype-p` and pauses it past the band or on hidden tab. Muted until the first gesture; speaker toggle persists `hype-sound` in localStorage. Reduced motion → posters only
 - `PriorityPanel` — max 5 rows (`+N more` toggle). Hides vaults with empty/placeholder `next_move`. Order: pinned (drag a row to pin it there) → auto: `blocked` → `next_move_scope` (today > this-week > someday) → oldest `last_updated`. Logic in `usePriorityOrder`. Vault label opens Obsidian; `next_move` inline-editable
 - `HabitPanel` — paginated (4 habits/page); only today's pip is interactive, days 0–5 are display-only
 - `ProjectPanel` milestones: short pills (`label`, 1–2 words); hover/focus shows `desc` in a shared `.ms-desc` line under the pills (no popover — card `overflow:hidden` + `backdrop-filter` would clip it)

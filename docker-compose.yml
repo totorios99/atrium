@@ -11,6 +11,7 @@ services:
       # inbox photo uploads — same volume as the db
       MEDIA_DIR: /data/inbox-media
       VAULT_ROOT: /vaults
+      HYPE_DIR: /hype
     # Runs as antonio (1000:1000) so milestone toggles can write STATUS.md back
     # to the vault. The pillar vaults are owned 1000:1000; the container image
     # defaults to uid 1001, which cannot write them even without :ro. The
@@ -32,6 +33,8 @@ services:
       - ${HOME}/Documents/The Alchemist's Atrium/photography-brain:/vaults/photography-brain
       - ${HOME}/Documents/The Alchemist's Atrium/style-brain:/vaults/style-brain
       - ${HOME}/Documents/The Alchemist's Atrium/home-brain:/vaults/home-brain
+      # hype hero clips + manifest, written by homelab's hype-add.sh
+      - /srv/media/hype:/hype:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3005/api/health"]

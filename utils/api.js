@@ -37,4 +37,5 @@ export const api = {
   updateWeeklyLabel:(id, label)          => request('PATCH',  `/weekly/${id}`, { label }),
   getPriorityOrder: ()                   => request('GET',    '/priority-order'),
   savePriorityOrder:(order)              => request('PATCH',  '/priority-order', { order }),
+  getHypeManifest:  ()                   => request('GET',    '/hype/manifest.json'),
 }

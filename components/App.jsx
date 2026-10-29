@@ -11,6 +11,7 @@ import ProjectPanel  from './ProjectPanel.jsx'
 import HabitPanel    from './HabitPanel.jsx'
 import InboxPanel    from './InboxPanel.jsx'
 import WeeklyPanel   from './WeeklyPanel.jsx'
+import HypeHero      from './HypeHero.jsx'
 
 function getDayOfYear(date) {
   const y = date.getFullYear(), m = date.getMonth(), d = date.getDate()
@@ -92,6 +93,7 @@ export default function App() {
   return (
     <>
       <div className="backdrop" />
+      <HypeHero />
       <main className="shell">
         <Header error={error} />
         <section className="main-row">
