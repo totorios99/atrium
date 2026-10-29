@@ -800,57 +800,51 @@ input.im-subject { border-bottom-color: var(--ink-ghost); }
 .ghost-btn.danger:hover { color: hsl(var(--coral)); border-color: hsl(var(--coral)/.5); }
 
 /* ── reduced motion ── */
-/* ── hype reel: fixed behind everything; intro = sharp, ambient = blurred backdrop ── */
+/* ── hype hero ── */
 .hype {
-  position: fixed; inset: 0; z-index: 0; overflow: hidden; background: #050608;
-  transition: filter 1.2s cubic-bezier(.4,0,.2,1), transform 1.2s cubic-bezier(.4,0,.2,1);
+  --hype-p: 0;                                   /* scroll progress over the band, set in JS */
+  position: relative; width: 100%; height: 34vh; min-height: 220px; max-height: 420px;
+  overflow: hidden; isolation: isolate; background: #07080b;
+  opacity: calc(1 - var(--hype-p) * .9);
+  transform: scale(calc(1 + var(--hype-p) * .04));
+  transform-origin: 50% 0;
+  /* bottom edge dissolves into the page backdrop */
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+          mask-image: linear-gradient(to bottom, #000 55%, transparent);
 }
-/* ponytail: CSS blur on the live video; swap for a downscaled canvas copy if it janks on weak GPUs */
-.hype.ambient { filter: blur(28px) brightness(.3) saturate(.75); transform: scale(1.08); }  /* scale hides blur's soft edges */
 .hype-layer {
-  position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+  position: absolute; inset: 0;
+  display: flex; justify-content: center;
   opacity: 0; transition: opacity 1.1s cubic-bezier(.4,0,.2,1);
 }
 .hype-layer.on { opacity: 1; }
-.hype-fill {
+.hype-ambient {
   position: absolute; inset: -8%; width: 116%; height: 116%; object-fit: cover;
-  filter: blur(42px) saturate(1.2) brightness(.45);
+  filter: blur(42px) saturate(1.25) brightness(.5);
 }
 .hype-clip {
   position: relative; height: 100%; max-width: 100%; object-fit: contain;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
-          mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  /* feather left/right into the ambient copy */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+          mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
 }
-.hype-intro-ui { position: fixed; inset: 0; z-index: 2; pointer-events: none; animation: fadeIn .6s ease both; }
 .hype-caption {
-  position: absolute; left: clamp(22px, 3.4vw, 48px); bottom: clamp(22px, 4vh, 44px);
+  position: absolute; left: clamp(22px, 3.4vw, 48px); bottom: 50%;
   font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
-  color: rgba(255,255,255,.5);
+  color: rgba(255,255,255,.42);
 }
-.hype-enter, .hype-sound {
-  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); color: rgba(255,255,255,.78);
-  cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+.hype-sound {
+  position: absolute; right: clamp(22px, 3.4vw, 48px); bottom: 50%;
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.75);
+  cursor: pointer; backdrop-filter: blur(8px);
   transition: background .2s ease, color .2s ease, transform .2s ease;
 }
-.hype-enter { position: absolute; left: 50%; bottom: clamp(18px, 4vh, 40px); translate: -50% 0; pointer-events: auto; animation: hypeNudge 2.4s ease-in-out infinite; }
-.hype-sound { position: fixed; right: 16px; bottom: 16px; z-index: 3; }
-.hype-enter:hover, .hype-sound:hover { background: rgba(255,255,255,.16); color: #fff; transform: scale(1.06); }
-.hype-enter:focus-visible, .hype-sound:focus-visible { outline: 2px solid rgba(255,255,255,.6); outline-offset: 2px; }
-.hype-enter svg, .hype-sound svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-@keyframes hypeNudge { 50% { transform: translateY(4px); } }
-
-/* content over the reel */
-[data-hype] .shell { position: relative; z-index: 1; transition: opacity 1.2s ease, transform 1.2s cubic-bezier(.2,.8,.2,1), visibility 0s; }
-[data-hype=intro] .shell { opacity: 0; transform: translateY(16px); visibility: hidden; pointer-events: none; transition-delay: 0s, 0s, 1.2s; }
-/* readability over moving video beats the effect: denser glass */
-[data-hype] .glass { background: var(--glass-bg-strong); }
-@media (prefers-color-scheme: light) {
-  [data-hype] .glass { background: linear-gradient(150deg, rgba(255,255,255,0.88), rgba(255,255,255,0.74) 60%); }
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  [data-hype] .glass { background: var(--bg-1); }
-}
+.hype-sound:hover { background: rgba(255,255,255,.16); color: #fff; transform: scale(1.06); }
+.hype-sound:focus-visible { outline: 2px solid rgba(255,255,255,.6); outline-offset: 2px; }
+.hype-sound svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+/* content slides up over the dissolving bottom of the band */
+.hype + .shell { margin-top: calc(-1 * min(12vh, 140px)); position: relative; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

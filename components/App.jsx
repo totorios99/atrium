@@ -88,12 +88,11 @@ export default function App() {
   const { statuses, loading, error, updateField } = useStatus()
   const { sorted, pins, savePins }                = usePriorityOrder(statuses)
 
-  if (loading) return <LoadingScreen />
-
   return (
     <>
       <div className="backdrop" />
       <HypeHero />
+      {loading ? <LoadingScreen /> : (
       <main className="shell">
         <Header error={error} />
         <section className="main-row">
@@ -106,6 +105,7 @@ export default function App() {
           <WeeklyPanel />
         </section>
       </main>
+      )}
     </>
   )
 }
