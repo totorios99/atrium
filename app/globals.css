@@ -681,6 +681,8 @@ body {
 .tag-web    { --tag-bg: color-mix(in srgb, #E879F9 15%, transparent); --tag-fg: #E879F9; --tag-bd: color-mix(in srgb, #E879F9 30%, transparent); }
 .tag-coffee { --tag-bg: color-mix(in srgb, #B07A4A 15%, transparent); --tag-fg: #B07A4A; --tag-bd: color-mix(in srgb, #B07A4A 30%, transparent); }
 .tag-photo  { --tag-bg: color-mix(in srgb, #06B6D4 15%, transparent); --tag-fg: #06B6D4; --tag-bd: color-mix(in srgb, #06B6D4 30%, transparent); }
+.tag-style  { --tag-bg: color-mix(in srgb, #1E3A5F 15%, transparent); --tag-fg: #1E3A5F; --tag-bd: color-mix(in srgb, #1E3A5F 30%, transparent); }
+.tag-home   { --tag-bg: color-mix(in srgb, #7C9A6E 15%, transparent); --tag-fg: #7C9A6E; --tag-bd: color-mix(in srgb, #7C9A6E 30%, transparent); }
 
 .inbox-item {
   padding-left: 10px; padding-right: 10px; border-radius: 12px; cursor: pointer;

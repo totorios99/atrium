@@ -14,6 +14,8 @@ const TAGS = [
   { id: 'webdev',       label: 'web',     cls: 'tag-web'     },
   { id: 'coffee',       label: 'coffee',  cls: 'tag-coffee'  },
   { id: 'photography',  label: 'photo',   cls: 'tag-photo'   },
+  { id: 'style',        label: 'style',   cls: 'tag-style'   },
+  { id: 'home',         label: 'home',    cls: 'tag-home'    },
   { id: 'branch',       label: 'branch',  cls: 'tag-branch'  },
 ]
 
