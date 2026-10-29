@@ -82,14 +82,14 @@ SQLite           ↗
 ### Layout (`components/App.jsx`)
 
 ```
-HypeHero (full width, 34vh, outside .shell)
+HypeHero (fixed full-viewport reel behind everything, outside .shell)
 Header (glass card):  [greeting / clock+date] | [gradient divider] | [QuoteWidget]
 Main row (1fr 1fr 1fr, height 486px):  PriorityPanel | ProjectPanel | HabitPanel
 Bottom row (1fr 1fr, height 384px):    InboxPanel    | WeeklyPanel
 ```
 
 - No photo/polaroid widget
-- `HypeHero` — motivational clip reel above the shell. Reads the manifest at runtime (new clips need no redeploy). Two layers swap: front plays, back preloads the next clip; crossfade starts `FADE_S` before the end. Each clip renders at native aspect (never cropped — subtitles/heads sit at edges) with feathered sides over a blurred poster. Scroll fades/scales it via `--hype-p` and pauses it past the band or on hidden tab. Muted until the first gesture; speaker toggle persists `hype-sound` in localStorage. Reduced motion → posters only
+- `HypeHero` — motivational clip reel, fixed behind the app. **intro**: sharp clip full-viewport, `.shell` hidden; ends on wheel/scroll/touchmove/key, the ↓ button, or `INTRO_MS` (a click only unmutes). **ambient**: same `<video>`s get CSS `blur(28px) brightness(.3) saturate(.75)`, content fades in; `<html data-hype>` drives this and denser `.glass` (opaque fallback without backdrop-filter). Manifest read at runtime (new clips need no redeploy). Two layers: front plays, back preloads next; crossfade `FADE_S` before end. Native aspect over blurred poster, never cropped. Paused on hidden tab. Audio muted until first gesture; `hype-sound` localStorage: unset = music in intro only, `on` = also ambient, `off` = never. Reduced motion → blurred poster, no intro
 - `PriorityPanel` — max 5 rows (`+N more` toggle). Hides vaults with empty/placeholder `next_move`. Order: pinned (drag a row to pin it there) → auto: `blocked` → `next_move_scope` (today > this-week > someday) → oldest `last_updated`. Logic in `usePriorityOrder`. Vault label opens Obsidian; `next_move` inline-editable
 - `HabitPanel` — paginated (4 habits/page); only today's pip is interactive, days 0–5 are display-only
 - `ProjectPanel` milestones: short pills (`label`, 1–2 words); hover/focus shows `desc` in a shared `.ms-desc` line under the pills (no popover — card `overflow:hidden` + `backdrop-filter` would clip it)
