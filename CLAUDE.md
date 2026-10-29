@@ -82,14 +82,14 @@ SQLite           ↗
 ### Layout (`components/App.jsx`)
 
 ```
-HypeHero (full width, 34vh, outside .shell; renders during LoadingScreen too)
+HypeHero (fixed full-viewport reel behind everything, outside .shell; renders during LoadingScreen too)
 Header (glass card):  [greeting / clock+date] | [gradient divider] | [QuoteWidget]
 Main row (1fr 1fr 1fr, height 486px):  PriorityPanel | ProjectPanel | HabitPanel
 Bottom row (1fr 1fr, height 384px):    InboxPanel    | WeeklyPanel
 ```
 
 - No photo/polaroid widget
-- `HypeHero` — motivational clip band above the shell (a full-viewport/ambient version was tried in 494b9ee and reverted: small sources looked bad stretched). Manifest fetched at module load (hydration), read at runtime so new clips need no redeploy. First clip = random among ≤720p clips (fast start); back layer preloads only after the front plays. Two layers swap with a `FADE_S` crossfade. Native aspect, feathered sides over a blurred `fill` (optional manifest field, mid-clip still) or the poster, never cropped. Scroll fades/scales via `--hype-p`, pauses past the band or on hidden tab. Muted until first gesture; speaker toggle persists `hype-sound`. Reduced motion → posters only
+- `HypeHero` — motivational clip reel, fixed behind the app (Antonio wants full-screen; the 34vh band in c48bae5/5de1b88 was rejected). **intro**: sharp clip, `.shell` hidden; ends on wheel/scroll/touchmove/key, the ↓ button, or `INTRO_MS` (a click only unmutes). **ambient**: same `<video>`s get CSS blur/darken, content fades in over denser `.glass` (`<html data-hype>`; opaque fallback without backdrop-filter). Clips: native aspect, capped at 1.6× native height (small sources look bad stretched), over a blurred `fill` (optional manifest field, mid-clip still) or poster (= first frame). Fast start: manifest fetched at module load, first clip random among ≤720p, back layer preloads only after the front plays, `play()` on canplay. Manifest read at runtime → new clips need no redeploy. Paused on hidden tab. `hype-sound` localStorage: unset = music in intro only, `on` = also ambient, `off` = never. Reduced motion → blurred poster, no intro
 - `PriorityPanel` — max 5 rows (`+N more` toggle). Hides vaults with empty/placeholder `next_move`. Order: pinned (drag a row to pin it there) → auto: `blocked` → `next_move_scope` (today > this-week > someday) → oldest `last_updated`. Logic in `usePriorityOrder`. Vault label opens Obsidian; `next_move` inline-editable
 - `HabitPanel` — paginated (4 habits/page); only today's pip is interactive, days 0–5 are display-only
 - `ProjectPanel` milestones: short pills (`label`, 1–2 words); hover/focus shows `desc` in a shared `.ms-desc` line under the pills (no popover — card `overflow:hidden` + `backdrop-filter` would clip it)
