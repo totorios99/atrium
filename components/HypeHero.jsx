@@ -131,7 +131,7 @@ export default function HypeHero() {
         if (!c) return null
         return (
           <div key={i} className={`hype-layer${i === front ? ' on' : ''}`} aria-hidden={i !== front}>
-            <img className="hype-ambient" src={src(c.poster)} alt="" />
+            <img className="hype-ambient" src={src(c.fill || c.poster)} alt="" />   {/* fill: optional mid-clip still; poster = first frame (may be black) */}
             {still ? (
               <img className="hype-clip" src={src(c.poster)} alt="" style={{ aspectRatio: `${c.width} / ${c.height}` }} />
             ) : (
