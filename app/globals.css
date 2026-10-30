@@ -800,13 +800,11 @@ input.im-subject { border-bottom-color: var(--ink-ghost); }
 .ghost-btn.danger:hover { color: hsl(var(--coral)); border-color: hsl(var(--coral)/.5); }
 
 /* ── reduced motion ── */
-/* ── hype reel: fixed behind everything; intro = sharp, ambient = blurred backdrop ── */
-.hype {
-  position: fixed; inset: 0; z-index: 0; overflow: hidden; background: #050608;
-  transition: filter 1.2s cubic-bezier(.4,0,.2,1), transform 1.2s cubic-bezier(.4,0,.2,1);
-}
-/* ponytail: CSS blur on the live video; swap for a downscaled canvas copy if it janks on weak GPUs */
-.hype.ambient { filter: blur(28px) brightness(.3) saturate(.75); transform: scale(1.08); }  /* scale hides blur's soft edges */
+/* ── hype reel: fixed full-viewport video = app background ── */
+.hype { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: #050608; }
+/* vignette: darker edges keep header/cards readable, centre gaps let the clip pop */
+.hype::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 45%, transparent 35%, rgba(0,0,0,.55) 100%), rgba(0,0,0,.18); }
 .hype-layer {
   position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
   opacity: 0; transition: opacity 1.1s cubic-bezier(.4,0,.2,1);
@@ -825,32 +823,22 @@ input.im-subject { border-bottom-color: var(--ink-ghost); }
   -webkit-mask-composite: source-in;
           mask-composite: intersect;
 }
-.hype-intro-ui { position: fixed; inset: 0; z-index: 2; pointer-events: none; animation: fadeIn .6s ease both; }
-.hype-caption {
-  position: absolute; left: clamp(22px, 3.4vw, 48px); bottom: clamp(22px, 4vh, 44px);
-  font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
-  color: rgba(255,255,255,.5);
-}
-.hype-enter, .hype-sound {
+.hype-sound {
   width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
   background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); color: rgba(255,255,255,.78);
   cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   transition: background .2s ease, color .2s ease, transform .2s ease;
 }
-.hype-enter { position: absolute; left: 50%; bottom: clamp(18px, 4vh, 40px); translate: -50% 0; pointer-events: auto; animation: hypeNudge 2.4s ease-in-out infinite; }
 .hype-sound { position: fixed; right: 16px; bottom: 16px; z-index: 3; }
-.hype-enter:hover, .hype-sound:hover { background: rgba(255,255,255,.16); color: #fff; transform: scale(1.06); }
-.hype-enter:focus-visible, .hype-sound:focus-visible { outline: 2px solid rgba(255,255,255,.6); outline-offset: 2px; }
-.hype-enter svg, .hype-sound svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-@keyframes hypeNudge { 50% { transform: translateY(4px); } }
+.hype-sound:hover { background: rgba(255,255,255,.16); color: #fff; transform: scale(1.06); }
+.hype-sound:focus-visible { outline: 2px solid rgba(255,255,255,.6); outline-offset: 2px; }
+.hype-sound svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 
-/* content over the reel */
-[data-hype] .shell { position: relative; z-index: 1; transition: opacity 1.2s ease, transform 1.2s cubic-bezier(.2,.8,.2,1), visibility 0s; }
-[data-hype=intro] .shell { opacity: 0; transform: translateY(16px); visibility: hidden; pointer-events: none; transition-delay: 0s, 0s, 1.2s; }
-/* readability over moving video beats the effect: denser glass */
-[data-hype] .glass { background: var(--glass-bg-strong); }
+/* content over the reel: glass blurs + tints the video behind each card */
+[data-hype] .shell { position: relative; z-index: 1; }
+[data-hype] .glass { background: linear-gradient(150deg, rgba(14,16,22,.62), rgba(10,12,16,.48) 60%); }
 @media (prefers-color-scheme: light) {
-  [data-hype] .glass { background: linear-gradient(150deg, rgba(255,255,255,0.88), rgba(255,255,255,0.74) 60%); }
+  [data-hype] .glass { background: linear-gradient(150deg, rgba(255,255,255,0.86), rgba(255,255,255,0.72) 60%); }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   [data-hype] .glass { background: var(--bg-1); }

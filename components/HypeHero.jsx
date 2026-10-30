@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '@/utils/api.js'
 
 const FADE_S    = 1.1           // clip crossfade, video + audio
-const INTRO_MS  = 7000          // intro auto-recedes after this
-const SOUND_KEY = 'hype-sound'  // 'on' = music in ambient too · 'off' = never · unset = intro only
+const SOUND_KEY = 'hype-sound'  // 'on' = music · anything else = muted
 const src = rel => `/api/hype/${rel}`
 
 // start fetching at hydration, not after the dashboard's own data loads
@@ -22,9 +21,8 @@ const readPref = () => { try { return localStorage.getItem(SOUND_KEY) } catch { 
 const savePref = v  => { try { localStorage.setItem(SOUND_KEY, v) } catch {} }
 
 /*
- * Fixed full-viewport reel behind the whole app.
- *  intro   — sharp clip, content hidden. Ends on scroll / wheel / key / "enter" / INTRO_MS.
- *  ambient — same <video> elements, CSS blur + darken; content fades in on top.
+ * Fixed full-viewport reel = the app's background. Dashboard is visible from the
+ * first paint; glass cards blur the video behind them, gaps show it sharp.
  * Two layers swap roles: front plays, back holds the next clip preloaded; near
  * the end of the front clip they crossfade. Clips render at native aspect over a
  * blurred poster — never cropped (subtitles / heads sit at the edges).
@@ -33,7 +31,6 @@ export default function HypeHero() {
   const [clips, setClips]       = useState([])
   const [slots, setSlots]       = useState([0, 1])   // clip index per layer
   const [front, setFront]       = useState(0)
-  const [phase, setPhase]       = useState('intro')
   const [unlocked, setUnlocked] = useState(false)    // a user gesture happened → audio allowed
   const [pref, setPref]         = useState(null)
   const [still, setStill]       = useState(false)    // reduced motion → blurred poster only
@@ -44,7 +41,6 @@ export default function HypeHero() {
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     setStill(reduce)
-    if (reduce) setPhase('ambient')
     setPref(readPref())
     manifestP?.then(m => {
       const list = Array.isArray(m?.clips) ? m.clips.filter(c => c.video && c.poster) : []
@@ -55,12 +51,12 @@ export default function HypeHero() {
     }).catch(() => {})
   }, [])
 
-  // page-level state for CSS: hides content during intro, strengthens glass over video
+  // page-level flag for CSS: tinted glass over video
   useEffect(() => {
-    const root = document.documentElement
-    if (clips.length) root.dataset.hype = phase
-    return () => { delete root.dataset.hype }
-  }, [clips.length, phase])
+    if (!clips.length) return
+    document.documentElement.dataset.hype = ''
+    return () => { delete document.documentElement.dataset.hype }
+  }, [clips.length])
 
   // first gesture unlocks audio (autoplay policy)
   useEffect(() => {
@@ -70,16 +66,6 @@ export default function HypeHero() {
     window.addEventListener('keydown', on)
     return () => { window.removeEventListener('pointerdown', on); window.removeEventListener('keydown', on) }
   }, [clips.length, unlocked])
-
-  // intro → ambient on scroll intent, any key, or timeout. A click alone only unmutes.
-  useEffect(() => {
-    if (!clips.length || phase !== 'intro') return
-    const recede = () => setPhase('ambient')
-    const t = setTimeout(recede, INTRO_MS)
-    const evs = ['wheel', 'touchmove', 'scroll', 'keydown']
-    evs.forEach(e => window.addEventListener(e, recede, { passive: true }))
-    return () => { clearTimeout(t); evs.forEach(e => window.removeEventListener(e, recede)) }
-  }, [clips.length, phase])
 
   // pause while the tab is hidden
   useEffect(() => {
@@ -94,13 +80,13 @@ export default function HypeHero() {
     return () => document.removeEventListener('visibilitychange', sync)
   }, [clips.length, front, still])
 
-  const audible = unlocked && pref !== 'off' && (phase === 'intro' || pref === 'on')
+  const audible = unlocked && pref === 'on'
 
-  // ease each layer's volume toward its target — covers clip crossfade and intro→ambient ramp.
+  // ease each layer's volume toward its target — covers clip crossfade and mute/unmute.
   // iOS ignores .volume (read-only), so there it just mutes/unmutes.
   useEffect(() => {
     if (!clips.length || still) return
-    const level = phase === 'intro' ? 1 : 0.5
+    const level = 0.6
     let raf
     const tick = () => {
       vids.forEach((r, i) => {
@@ -108,13 +94,13 @@ export default function HypeHero() {
         if (!v) return
         const target = audible && i === front ? level : 0
         v.volume = Math.min(1, Math.max(0, v.volume + (target - v.volume) * 0.05))
-        v.muted = !unlocked || pref === 'off' || (target === 0 && v.volume < 0.01)
+        v.muted = !audible || (target === 0 && v.volume < 0.01)
       })
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [clips.length, front, audible, unlocked, pref, phase, still])
+  }, [clips.length, front, audible, still])
 
   const onTime = i => e => {
     const v = e.currentTarget
@@ -145,7 +131,7 @@ export default function HypeHero() {
 
   return (
     <>
-      <div className={`hype ${phase}`} aria-hidden="true">
+      <div className="hype" aria-hidden="true">
         {[0, 1].map(i => {
           const c = clips[slots[i]]
           if (!c || (still && i !== front)) return null
@@ -176,15 +162,6 @@ export default function HypeHero() {
           )
         })}
       </div>
-
-      {phase === 'intro' && (
-        <div className="hype-intro-ui">
-          <div className="hype-caption">{clips[slots[front]]?.title}</div>
-          <button className="hype-enter" onClick={() => setPhase('ambient')} aria-label="Enter dashboard">
-            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg>
-          </button>
-        </div>
-      )}
 
       {!still && (
         <button className="hype-sound" onClick={toggleSound} aria-label={audible ? 'Mute music' : 'Play music'} aria-pressed={audible}>

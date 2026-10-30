@@ -82,14 +82,14 @@ SQLite           ↗
 ### Layout (`components/App.jsx`)
 
 ```
-HypeHero (fixed full-viewport reel behind everything, outside .shell; renders during LoadingScreen too)
+HypeHero (fixed full-viewport video background behind .shell; renders during LoadingScreen too)
 Header (glass card):  [greeting / clock+date] | [gradient divider] | [QuoteWidget]
 Main row (1fr 1fr 1fr, height 486px):  PriorityPanel | ProjectPanel | HabitPanel
 Bottom row (1fr 1fr, height 384px):    InboxPanel    | WeeklyPanel
 ```
 
 - No photo/polaroid widget
-- `HypeHero` — motivational clip reel, fixed behind the app (Antonio wants full-screen; the 34vh band in c48bae5/5de1b88 was rejected). **intro**: sharp clip, `.shell` hidden; ends on wheel/scroll/touchmove/key, the ↓ button, or `INTRO_MS` (a click only unmutes). **ambient**: same `<video>`s get CSS blur/darken, content fades in over denser `.glass` (`<html data-hype>`; opaque fallback without backdrop-filter). Clips: native aspect, capped at 1.6× native height (small sources look bad stretched), over a blurred `fill` (optional manifest field, mid-clip still) or poster (= first frame). Fast start: manifest fetched at module load, first clip random among ≤720p, back layer preloads only after the front plays, `play()` on canplay. Manifest read at runtime → new clips need no redeploy. Paused on hidden tab. `hype-sound` localStorage: unset = music in intro only, `on` = also ambient, `off` = never. Reduced motion → blurred poster, no intro
+- `HypeHero` — motivational clip reel = the app background (fixed, full viewport, behind `.shell`). No intro: dashboard visible from first paint (an intro phase in 494b9ee/bb4f3c9 and a 34vh band in c48bae5/5de1b88 were both rejected). Video stays sharp; `.hype::after` vignette darkens edges, `[data-hype] .glass` gets a dark tint so cards stay readable while their backdrop-filter blurs the clip behind them. Clips: native aspect, capped at 1.6× native height, over a blurred `fill` (optional manifest field) or poster. Fast start: manifest fetched at module load, first clip random among ≤720p, back layer preloads only after the front plays, `play()` on canplay. Manifest read at runtime → new clips need no redeploy. Paused on hidden tab. Music only when `hype-sound` localStorage = `on` (speaker button). Reduced motion → blurred poster
 - `PriorityPanel` — max 5 rows (`+N more` toggle). Hides vaults with empty/placeholder `next_move`. Order: pinned (drag a row to pin it there) → auto: `blocked` → `next_move_scope` (today > this-week > someday) → oldest `last_updated`. Logic in `usePriorityOrder`. Vault label opens Obsidian; `next_move` inline-editable
 - `HabitPanel` — paginated (4 habits/page); only today's pip is interactive, days 0–5 are display-only
 - `ProjectPanel` milestones: short pills (`label`, 1–2 words); hover/focus shows `desc` in a shared `.ms-desc` line under the pills (no popover — card `overflow:hidden` + `backdrop-filter` would clip it)
