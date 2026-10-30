@@ -838,7 +838,7 @@ input.im-subject { border-bottom-color: var(--ink-ghost); }
 [data-hype] .shell { position: relative; z-index: 1; }
 [data-hype] .glass { background: linear-gradient(150deg, rgba(14,16,22,.44), rgba(10,12,16,.30) 60%); }
 @media (prefers-color-scheme: light) {
-  [data-hype] .glass { background: linear-gradient(150deg, rgba(255,255,255,0.66), rgba(255,255,255,0.50) 60%); }
+  [data-hype] .glass { background: linear-gradient(150deg, rgba(255,255,255,0.80), rgba(255,255,255,0.66) 60%); }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   [data-hype] .glass { background: var(--bg-1); }
