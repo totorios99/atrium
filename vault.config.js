@@ -38,8 +38,8 @@ export const config = {
     },
     {
       id:    'spirituality',
-      label: 'Spirituality',
-      path:  join(VAULT_ROOT, 'spirituality-brain'),
+      label: 'Self',
+      path:  join(VAULT_ROOT, 'self-brain'),
       color: '#9F7AEA',
     },
     {

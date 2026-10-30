@@ -24,7 +24,7 @@ services:
       # Vault directories — mount your Obsidian vaults here
       - ${HOME}/Documents/The Alchemist's Atrium/cyber-brain:/vaults/cyber-brain
       - ${HOME}/Documents/The Alchemist's Atrium/fitness-brain:/vaults/fitness-brain
-      - ${HOME}/Documents/The Alchemist's Atrium/spirituality-brain:/vaults/spirituality-brain
+      - ${HOME}/Documents/The Alchemist's Atrium/self-brain:/vaults/self-brain
       - ${HOME}/Documents/The Alchemist's Atrium/homelab-brain:/vaults/homelab-brain
       - ${HOME}/Documents/The Alchemist's Atrium/linux-brain:/vaults/linux-brain
       - ${HOME}/Documents/The Alchemist's Atrium/webdev-brain:/vaults/webdev-brain
