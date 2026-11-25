@@ -15,6 +15,10 @@ services:
       MEDIA_DIR: /data/inbox-media
       VAULT_ROOT: /vaults
       HYPE_DIR: /hype
+      # Today panel reads Mise on the host port; MISE_ADMIN_SECRET lives in atrium.env
+      MISE_URL: http://host.docker.internal:3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     # Runs as antonio (1000:1000) so milestone toggles can write STATUS.md back
     # to the vault. The pillar vaults are owned 1000:1000; the container image
     # defaults to uid 1001, which cannot write them even without :ro. The

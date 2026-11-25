@@ -227,3 +227,14 @@ export function useHabits() {
   }, [])
   return { habits }
 }
+
+export function useToday() {
+  const [today, setToday] = useState(null)
+  useEffect(() => {
+    const load = () => api.getToday().then(setToday).catch(() => {})
+    load()
+    const id = setInterval(load, POLL_INTERVAL)
+    return () => clearInterval(id)
+  }, [])
+  return { today }
+}

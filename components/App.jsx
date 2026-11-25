@@ -9,6 +9,7 @@ import QuoteWidget   from './QuoteWidget.jsx'
 import PriorityPanel from './PriorityPanel.jsx'
 import ProjectPanel  from './ProjectPanel.jsx'
 import HabitsPanel   from './HabitsPanel.jsx'
+import TodayPanel    from './TodayPanel.jsx'
 import InboxPanel    from './InboxPanel.jsx'
 import WeeklyPanel   from './WeeklyPanel.jsx'
 import HypeHero      from './HypeHero.jsx'
@@ -95,6 +96,7 @@ export default function App() {
       {loading ? <LoadingScreen /> : (
       <main className="shell">
         <Header error={error} />
+        <TodayPanel />
         <section className="main-row">
           <PriorityPanel statuses={sorted} onUpdate={updateField} pins={pins} onPinsChange={savePins} />
           <ProjectPanel  statuses={statuses} onUpdate={updateField} />

@@ -425,6 +425,9 @@ body {
 .hm-cells { display: grid; grid-template-columns: repeat(13, 9px); gap: 3px; }
 .hm-cell { width: 9px; height: 9px; border-radius: 2.5px; background: var(--ink-ghost); position: relative; overflow: hidden; }
 .hm-cell::after { content: ""; position: absolute; inset: 0; background: var(--pill); opacity: calc(var(--r) * 0.95); border-radius: inherit; }
+.td-row { grid-template-columns: 44px minmax(0,1fr); }
+.td-at { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-faint); }
+.td-row.done .h-name { text-decoration: line-through; opacity: .6; }
 .hm-cell.now { outline: 1px solid var(--pill); outline-offset: 1px; }
 
 /* ── bottom 2-col row ── */
