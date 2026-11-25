@@ -179,7 +179,12 @@ export function useWeekly() {
     try { await api.updateWeeklyLabel(id, label) } catch { load() }
   }, [load])
 
-  return { data, loading, cycleItem, updateLabel }
+  const addItem = useCallback(async (label) => {
+    if (!label.trim()) return
+    try { await api.addWeeklyItem(label) } finally { load() }
+  }, [load])
+
+  return { data, loading, cycleItem, updateLabel, addItem }
 }
 
 // next_move values that mean "nothing to do yet" — hidden from Active Priorities

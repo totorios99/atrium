@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { flushSync } from 'react-dom'
+import Pager from './Pager.jsx'
 
 function EditableField({ value, className, emptyClass, placeholder, onSave }) {
   const [editing, setEditing] = useState(false)
@@ -17,10 +18,12 @@ function EditableField({ value, className, emptyClass, placeholder, onSave }) {
 
   if (editing) {
     return (
-      <input
+      <textarea
         className={`inline-edit ${className}`}
+        rows={1}
+        ref={el => { if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' } }}
         value={draft}
-        onChange={e => setDraft(e.target.value)}
+        onChange={e => setDraft(e.target.value.replace(/\n/g, ' '))}
         onBlur={commit}
         onKeyDown={e => {
           if (e.key === 'Enter')  { e.preventDefault(); commit() }
@@ -58,7 +61,7 @@ function accentProps(s) {
   return { className: '', style: { '--accent': s.vault_color, '--accent-soft': s.vault_color } }
 }
 
-const MAX_ROWS = 5
+const PER_PAGE = 4
 
 // move item from index `from` to index `to`, return new array
 function move(arr, from, to) {
@@ -74,9 +77,10 @@ const EASE = 'cubic-bezier(.2,.8,.2,1)'
 const SHIFT_TRANSITION = 'transform .17s cubic-bezier(.22,.61,.36,1)'
 
 export default function PriorityPanel({ statuses, onUpdate, pins, onPinsChange }) {
-  const [showAll, setShowAll] = useState(false)
-  const visible = showAll ? statuses : statuses.slice(0, MAX_ROWS)
-  const hidden  = statuses.length - visible.length
+  const [page, setPage] = useState(0)
+  const pages   = Math.max(1, Math.ceil(statuses.length / PER_PAGE))
+  const current = Math.min(page, pages - 1)
+  const visible = statuses.slice(current * PER_PAGE, (current + 1) * PER_PAGE)
 
   // dropping a row pins it there; rows above it get pinned too so its slot holds
   function commitDrop(target, draggedId) {
@@ -184,7 +188,9 @@ export default function PriorityPanel({ statuses, onUpdate, pins, onPinsChange }
         // transformed-old-order == untransformed-new-order → invisible handoff.
         const els = d.baseOrder.map(id => rowRefs.current.get(id)).filter(Boolean)
         for (const el of els) el.style.transition = 'none'
-        flushSync(() => commitDrop(target, d.vaultId))   // DOM reorders now, synchronously
+        const all = statuses.map(s => s.vault_id)
+        const at  = current * PER_PAGE
+        flushSync(() => commitDrop([...all.slice(0, at), ...target, ...all.slice(at + target.length)], d.vaultId))   // DOM reorders now, synchronously
         for (const el of els) { el.style.transform = ''; el.style.zIndex = '' }
         // force reflow so the cleared transforms apply before transitions return
         if (containerRef.current) void containerRef.current.offsetHeight
@@ -216,7 +222,7 @@ export default function PriorityPanel({ statuses, onUpdate, pins, onPinsChange }
         <div className="card-label head-amethyst"><span className="dot" />Active Priorities</div>
         <span className="reorder-hint">drag to pin</span>
       </div>
-      <div ref={containerRef} className="card-scroll">
+      <div ref={containerRef} key={current} className="card-scroll fade-up">
         {visible.map(s => {
           const accent = accentProps(s)
           const pinned = pins.includes(s.vault_id)
@@ -271,12 +277,8 @@ export default function PriorityPanel({ statuses, onUpdate, pins, onPinsChange }
           </div>
           )
         })}
-        {(hidden > 0 || showAll) && statuses.length > MAX_ROWS && (
-          <button className="more-btn" onClick={() => setShowAll(v => !v)}>
-            {showAll ? 'show less' : `+${hidden} more`}
-          </button>
-        )}
       </div>
+      <Pager page={current} total={pages} onChange={setPage} />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db.js'
-import { habits } from '@/habits.config.js'
+import { habits, BLOCKS } from '@/habits.config.js'
 import { dayOf, addDays, mondayOf, summarize } from '@/lib/habits.js'
 
 export const dynamic = 'force-dynamic'
@@ -42,12 +42,11 @@ export async function GET() {
 
   const items = habits.map(h => {
     const s = byKey.get(h.key)
-    return { key: h.key, at: h.at ?? null, label: h.label, text: s.text, done: s.done, warn: s.warn }
+    return { key: h.key, block: h.block ?? 'all day', label: h.label, text: s.text, done: s.done, warn: s.warn }
   })
   const m = await meals(today)
-  items.push({ key: 'meals', at: null, label: 'Meals', text: m.detail, list: m.titles, done: false, warn: false })
+  items.push({ key: 'meals', block: 'all day', label: 'Meals', text: m.detail, list: m.titles, done: false, warn: false })
 
-  // Timed items first by hour, then the untimed ones (weekly quotas, meals) in config order.
-  items.sort((a, b) => (a.at === null) - (b.at === null) || (a.at ?? '').localeCompare(b.at ?? ''))
-  return NextResponse.json({ today, items })
+  const blocks = BLOCKS.map(name => ({ name, items: items.filter(i => i.block === name) })).filter(b => b.items.length)
+  return NextResponse.json({ today, blocks })
 }

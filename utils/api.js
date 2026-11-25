@@ -34,6 +34,7 @@ export const api = {
   deleteInboxMedia: (url)                => request('DELETE', url.replace(/^\/api/, '')),
   deleteInboxItem:  (id)                 => request('DELETE', `/inbox/${id}`),
   getWeekly:        ()                   => request('GET',    '/weekly'),
+  addWeeklyItem:    (label)              => request('POST',   '/weekly', { label }),
   updateWeeklyItem: (id, status)         => request('PATCH',  `/weekly/${id}`, { status }),
   updateWeeklyLabel:(id, label)          => request('PATCH',  `/weekly/${id}`, { label }),
   getPriorityOrder: ()                   => request('GET',    '/priority-order'),

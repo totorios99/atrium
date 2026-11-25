@@ -16,7 +16,8 @@ function stateIndex(status) {
 const fmtDay = iso => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
 
 export default function WeeklyPanel() {
-  const { data, loading, cycleItem, updateLabel } = useWeekly()
+  const { data, loading, cycleItem, updateLabel, addItem } = useWeekly()
+  const [draft,       setDraft]       = useState('')
   const [editingId,   setEditingId]   = useState(null)
   const [editLabel,   setEditLabel]   = useState('')
   const [showArchive, setShowArchive] = useState(false)
@@ -45,9 +46,9 @@ export default function WeeklyPanel() {
             onClick={() => setShowArchive(v => !v)}
             aria-pressed={showArchive}
           >
-            {showArchive ? '← this week' : `archive${archive.length ? ` · ${archive.length}` : ''}`}
+            {showArchive ? '← list' : `archive${archive.length ? ` · ${archive.length}` : ''}`}
           </button>
-          {!showArchive && <span className="count-badge count-badge-jade">{data.weekDone}/{data.weekTotal}</span>}
+          {!showArchive && <span className="count-badge count-badge-jade">{data.done}/{data.total}</span>}
         </div>
       </div>
 
@@ -69,7 +70,7 @@ export default function WeeklyPanel() {
       ) : (
         <div key="week" className="card-scroll fade-up">
           {data.items.length === 0 && (
-            <p style={{ fontSize: '13px', color: 'var(--ink-faint)' }}>All done this week — see archive.</p>
+            <p style={{ fontSize: '13px', color: 'var(--ink-faint)' }}>Nothing pending.</p>
           )}
           {data.items.map(item => {
             const si  = stateIndex(item.status)
@@ -104,6 +105,13 @@ export default function WeeklyPanel() {
               </div>
             )
           })}
+          <input
+            className="inline-edit c-text check-add"
+            placeholder="+ add item"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && draft.trim()) { addItem(draft); setDraft('') } }}
+          />
         </div>
       )}
     </div>
