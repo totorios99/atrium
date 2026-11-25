@@ -17,6 +17,8 @@ services:
       HYPE_DIR: /hype
       # Today panel reads Mise on the host port; MISE_ADMIN_SECRET lives in atrium.env
       MISE_URL: http://host.docker.internal:3000
+      # Twitter/Reddit breaks (lib/breaks.js); ADGUARD_USER and ADGUARD_PASS live in atrium.env
+      ADGUARD_URL: http://host.docker.internal:7200
     extra_hosts:
       - "host.docker.internal:host-gateway"
     # Runs as antonio (1000:1000) so milestone toggles can write STATUS.md back

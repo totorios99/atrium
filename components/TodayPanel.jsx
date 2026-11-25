@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useToday } from '@/hooks/useStatus.js'
+import { useState, useEffect } from 'react'
+import { useToday, useBreaks } from '@/hooks/useStatus.js'
 
 // What today asks of me, by part of the day, and how each habit is going. Nothing to tick:
 // a row turns done when its event arrives (habits.config.js). The strip is the last 7 days
@@ -36,7 +37,30 @@ export default function TodayPanel() {
             ))}
           </section>
         ))}
+        <Breaks />
       </div>
     </div>
+  )
+}
+
+// Twitter and Reddit stay blocked on my PC; each button opens one for 15 minutes.
+function Breaks() {
+  const { breaks, error, start } = useBreaks()
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id) }, [])
+  if (!breaks) return null
+  const left = until => { const s = Math.max(0, Math.round((until - now) / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }
+  return (
+    <section className="td-block">
+      <div className="td-block-name">breaks</div>
+      <div className="td-breaks">
+        {breaks.map(b => (
+          <button key={b.service} className={`ghost-btn${b.until && b.until > now ? ' on' : ''}`} disabled={!!b.until && b.until > now} onClick={() => start(b.service)}>
+            {b.until && b.until > now ? `${b.label} open · ${left(b.until)}` : `${b.label} · 15 min`}
+          </button>
+        ))}
+      </div>
+      {error && <div className="td-status" style={{ color: 'hsl(var(--coral))' }}>{error}</div>}
+    </section>
   )
 }

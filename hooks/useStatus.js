@@ -243,3 +243,19 @@ export function useToday() {
   }, [])
   return { today }
 }
+
+export function useBreaks() {
+  const [breaks, setBreaks] = useState(null)
+  const [error,  setError]  = useState(null)
+  const load = useCallback(() => api.getBreaks().then(d => setBreaks(d.breaks)).catch(() => {}), [])
+  useEffect(() => {
+    load()
+    const id = setInterval(load, 30_000)
+    return () => clearInterval(id)
+  }, [load])
+  const start = useCallback(async service => {
+    setError(null)
+    try { setBreaks((await api.startBreak(service)).breaks) } catch (e) { setError(e.message) }
+  }, [])
+  return { breaks, error, start }
+}
