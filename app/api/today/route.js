@@ -20,6 +20,7 @@ async function meals(today) {
   try {
     const week = await mise(`/api/plans/week?start=${today}`)
     const day = week.days?.find(d => d.date.slice(0, 10) === today)
+    if (day?.isDismissed) return { titles: [], detail: 'day off in Mise' }
     let titles = (day?.meals ?? []).map(m => m.meal?.title).filter(Boolean)
     let detail = 'planned'
     if (!titles.length) {
