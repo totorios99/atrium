@@ -6,6 +6,9 @@ services:
     image: ghcr.io/totorios99/atrium:latest
     ports:
       - "3005:3005"
+    # EVENTS_TOKEN for POST /api/events (iPhone Shortcuts, Forma poller, Hermes); lives outside the repo
+    env_file:
+      - ${HOME}/.config/secrets/atrium.env
     environment:
       DATABASE_URL: "file:/data/cockpit.db"
       # inbox photo uploads — same volume as the db

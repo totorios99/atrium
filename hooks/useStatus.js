@@ -215,3 +215,15 @@ export function usePriorityOrder(statuses) {
 
   return { sorted: [...pinned, ...rest], pins, savePins }
 }
+
+// Habit summaries from /api/habits; events arrive on their own, so this only polls.
+export function useHabits() {
+  const [habits, setHabits] = useState(null)
+  useEffect(() => {
+    const load = () => api.getHabits().then(d => setHabits(d.habits)).catch(() => {})
+    load()
+    const id = setInterval(load, POLL_INTERVAL)
+    return () => clearInterval(id)
+  }, [])
+  return { habits }
+}

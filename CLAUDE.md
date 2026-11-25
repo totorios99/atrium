@@ -12,7 +12,7 @@ npm run db:push    # push Prisma schema changes to SQLite
 npm run db:studio  # open Prisma Studio
 ```
 
-No test suite exists.
+No test suite exists. The habit math has one plain check: `node lib/habits.test.js`.
 
 ## Architecture
 
@@ -31,8 +31,8 @@ Next.js 16 App Router on **port 3005**. API routes live in `app/api/`. No separa
 | Data | Storage | API |
 |------|---------|-----|
 | Vault status / projects | `<vault>/STATUS.md` (YAML frontmatter, read-only) | `GET /api/status` |
-| Habit checked state (daily) | SQLite `HabitHistory` | `GET /api/status`, `PATCH /api/status/[vaultId]` |
-| Habit history (7-day) | SQLite `HabitHistory` | `GET /api/habits/[vaultId]/history` |
+| Habit events (Nov 24th, 2026) | SQLite `HabitEvent`; habit list in `habits.config.js` | `POST /api/events` (Bearer `EVENTS_TOKEN`), `GET /api/habits` |
+| Old per-vault habit toggles (legacy, no UI) | SQLite `HabitHistory` | `GET /api/status`, `PATCH /api/status/[vaultId]` |
 | Inbox items | SQLite `InboxItem` (+ `InboxMedia`, files in `MEDIA_DIR`) | `/api/inbox`, `/api/inbox/[id]`, `/api/inbox/[id]/media`, `/api/inbox/media/[file]` |
 | Weekly checklist + archive | SQLite `WeeklyItem` | `/api/weekly`, `PATCH /api/weekly/[id]` |
 | Pinned priorities | SQLite `Setting` (key `priority_pins`) | `/api/priority-order` |
@@ -45,7 +45,8 @@ model InboxItem    { id, text, tag, body?, meta? (JSON str), source, createdAt, 
 model InboxMedia   { id, itemId → InboxItem (cascade), file, mime, createdAt }
 model WeeklyItem   { id, weekKey, label, status, pos, completedAt? }
 model Setting      { key (PK), value }
-model HabitHistory { id, vaultId, date, habitKey, value — @@unique([vaultId, date, habitKey]) }
+model HabitHistory { id, vaultId, date, habitKey, value — @@unique([vaultId, date, habitKey]) }  // legacy
+model HabitEvent   { id, habit, day, at, source, ref?, note?, createdAt — @@unique([source, ref]) }
 ```
 
 `DATABASE_URL="file:./cockpit.db"` — relative paths resolve from `prisma/` (the schema dir), so the DB file lives at `prisma/cockpit.db`.
@@ -122,3 +123,12 @@ CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --skip-generat
 ```
 
 Vault directories mount `:ro` (read-only). SQLite file must be on a writable volume (`DATABASE_URL=file:/data/cockpit.db` in compose).
+
+### Habits (Nov 24th, 2026)
+
+- `habits.config.js` is the only habit list. Each habit is `period: 'day'` or `'week'` with a `target`; `unit: 'days'` counts distinct days; `from` merges event habits (movement = hypertrophy + workouts).
+- Only events an agent can't produce count: NFC taps and Watch workouts from iPhone Shortcuts, Forma sessions, platform flags, Hermes messages from my phone. The design is in self-brain → growth/Idea — Habit system.md.
+- `lib/habits.js` is pure: `dayOf()` dates an instant in America/Mexico_City with a 04:00 cutoff. The container clock is UTC, so never use `new Date().getDate()` for a habit day (`todayKey()` in lib/vault.js still does, for the legacy toggles).
+- `POST /api/events` refuses everything when `EVENTS_TOKEN` is unset. The token lives in `~/.config/secrets/atrium.env` (compose `env_file`), never in the repo.
+- A resend with the same `source` + `ref` returns `{ duplicate: true }` and counts once.
+

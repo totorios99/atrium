@@ -50,3 +50,19 @@ model HabitHistory {
 
   @@unique([vaultId, date, habitKey])
 }
+
+// One thing that happened, from a source an agent can't fake: an NFC tap, a Watch
+// workout, a Forma session, a flag, a message from my phone (Nov 24th, 2026).
+model HabitEvent {
+  id        Int      @id @default(autoincrement())
+  habit     String   // a key in habits.config.js
+  day       String   // YYYY-MM-DD in my time zone, 04:00 cutoff (lib/habits.js dayOf)
+  at        DateTime
+  source    String   // "nfc" | "watch" | "forma" | "htb" | "pwncollege" | "hermes"
+  ref       String?  // the source's own id; with source it stops a resend counting twice
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([source, ref])
+  @@index([habit, day])
+}

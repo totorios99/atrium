@@ -415,6 +415,18 @@ body {
 .h-spirit { --pill: hsl(var(--amethyst)); }
 .h-home   { --pill: hsl(var(--azure)); }
 
+/* habits: 26 weekly cells per habit, filled by the share of the week's target met */
+.hm-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--glass-border); --pill: hsl(var(--jade)); }
+.hm-row:first-of-type { border-top: none; }
+.hm-row .h-name { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
+.hm-status { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .04em; color: var(--ink-faint); margin-top: 3px; }
+.hm-row.done .hm-status { color: var(--pill); }
+.hm-row.warn .hm-status { color: hsl(var(--coral)); }
+.hm-cells { display: grid; grid-template-columns: repeat(13, 9px); gap: 3px; }
+.hm-cell { width: 9px; height: 9px; border-radius: 2.5px; background: var(--ink-ghost); position: relative; overflow: hidden; }
+.hm-cell::after { content: ""; position: absolute; inset: 0; background: var(--pill); opacity: calc(var(--r) * 0.95); border-radius: inherit; }
+.hm-cell.now { outline: 1px solid var(--pill); outline-offset: 1px; }
+
 /* ── bottom 2-col row ── */
 .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
 .bottom-row .card { height: 384px; }

@@ -1,4 +1,11 @@
 export const quotes = [
+  // Who I am becoming, told as my story (self-brain → growth/Idea — Habit system.md)
+  { text: "He shows up where no one else wants to." },
+  { text: "The master has failed more times than the apprentice has even tried." },
+  { text: "He doesn't negotiate with the morning." },
+  { text: "While others plan, he's already on rep three." },
+  { text: "He never waited to feel ready. Readiness caught up." },
+  { text: "Every box he owns was once a box that beat him." },
   { text: "The cave you fear to enter holds the treasure you seek.", author: "Joseph Campbell" },
   { text: "Do not go where the path may lead. Go instead where there is no path and leave a trail.", author: "Ralph Waldo Emerson" },
   { text: "You do not rise to the level of your goals. You fall to the level of your systems.", author: "James Clear" },

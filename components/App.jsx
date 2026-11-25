@@ -8,7 +8,7 @@ import FlipClock     from './FlipClock.jsx'
 import QuoteWidget   from './QuoteWidget.jsx'
 import PriorityPanel from './PriorityPanel.jsx'
 import ProjectPanel  from './ProjectPanel.jsx'
-import HabitPanel    from './HabitPanel.jsx'
+import HabitsPanel   from './HabitsPanel.jsx'
 import InboxPanel    from './InboxPanel.jsx'
 import WeeklyPanel   from './WeeklyPanel.jsx'
 import HypeHero      from './HypeHero.jsx'
@@ -98,7 +98,7 @@ export default function App() {
         <section className="main-row">
           <PriorityPanel statuses={sorted} onUpdate={updateField} pins={pins} onPinsChange={savePins} />
           <ProjectPanel  statuses={statuses} onUpdate={updateField} />
-          <HabitPanel    statuses={statuses} onUpdate={updateField} />
+          <HabitsPanel />
         </section>
         <section className="bottom-row">
           <InboxPanel />

@@ -21,7 +21,7 @@ async function request(method, path, body) {
 export const api = {
   getAllStatus:      ()                   => request('GET',    '/status'),
   updateStatus:     (vaultId, updates)   => request('PATCH',  `/status/${vaultId}`, updates),
-  getHabitHistory:  (vaultId)            => request('GET',    `/habits/${vaultId}/history`),
+  getHabits:        ()                   => request('GET',    '/habits'),
   getInbox:         ()                   => request('GET',    '/inbox'),
   addInboxItem:     (text, tag)          => request('POST',   '/inbox', { text, tag }),
   updateInboxItem:  (id, patch)          => request('PATCH',  `/inbox/${id}`, patch),   // { text?, body? }
