@@ -11,7 +11,8 @@ export async function GET() {
   await prisma.weeklyItem.deleteMany({ where: { status: 'done', completedAt: { lt: new Date(Date.now() - ARCHIVE_KEEP_MS) } } })
   const all    = await prisma.weeklyItem.findMany({ orderBy: [{ pos: 'asc' }, { id: 'asc' }] })
   const cutoff = Date.now() - CLEAR_AFTER_MS
-  const items  = all.filter(i => !(i.status === 'done' && i.completedAt && i.completedAt.getTime() < cutoff))
+  // done rows from before completedAt existed have no date: they count as long cleared
+  const items  = all.filter(i => !(i.status === 'done' && (!i.completedAt || i.completedAt.getTime() < cutoff)))
   const archive = all
     .filter(i => i.status === 'done' && i.completedAt)
     .sort((a, b) => b.completedAt - a.completedAt)
