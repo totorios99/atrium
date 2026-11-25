@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { timingSafeEqual } from 'node:crypto'
+import { authorized } from '@/lib/auth.js'
 import { prisma } from '@/lib/db.js'
 import { habits } from '@/habits.config.js'
 import { dayOf } from '@/lib/habits.js'
@@ -8,15 +8,6 @@ import { dayOf } from '@/lib/habits.js'
 // Callers: iPhone Shortcuts (NFC taps, Watch workouts), the Forma poller, Hermes.
 const KEYS = new Set(habits.flatMap(h => [h.key, ...(h.from ?? [])]))
 
-function authorized(req) {
-  const want = process.env.EVENTS_TOKEN
-  if (!want) return false                       // no token configured: the endpoint stays shut
-  const header = req.headers.get('authorization') ?? ''
-  if (!header.startsWith('Bearer ')) return false
-  const got = header.slice(7)
-  const a = Buffer.from(got), b = Buffer.from(want)
-  return a.length === b.length && timingSafeEqual(a, b)
-}
 
 export async function POST(req) {
   if (!authorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })

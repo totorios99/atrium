@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db.js'
 import { habits, BLOCKS } from '@/habits.config.js'
 import { dayOf, addDays, mondayOf, summarize } from '@/lib/habits.js'
+import { pending } from '@/lib/recruiter.js'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +52,10 @@ export async function GET() {
   })
   const m = await meals(today)
   items.push({ key: 'meals', block: 'all day', label: 'Meals', text: m.detail, list: m.titles, done: false, warn: false })
+
+  // recruiter mails open the morning, before applying to new jobs
+  for (const r of (await pending()).reverse())
+    items.unshift({ key: `mail:${r.id}`, mailId: r.id, block: 'morning', label: r.subject, text: `${r.from} · ${r.date}`, warn: true, done: false })
 
   const blocks = BLOCKS.map(name => ({ name, items: items.filter(i => i.block === name) })).filter(b => b.items.length)
   return NextResponse.json({ today, blocks })

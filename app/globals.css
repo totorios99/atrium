@@ -435,6 +435,8 @@ body {
 .td-row.done .td-name { color: var(--ink-faint); }
 .td-row.done .td-status { color: var(--pill); }
 .td-row.warn .td-status { color: hsl(var(--coral)); }
+.td-dismiss { background: none; border: 0; color: var(--ink-faint); font-size: 16px; line-height: 1; cursor: pointer; padding: 2px 6px; }
+.td-dismiss:hover { color: var(--ink); }
 .td-breaks { display: flex; gap: 8px; flex-wrap: wrap; }
 .td-breaks .ghost-btn.on { color: hsl(var(--coral)); }
 .td-strip { display: flex; gap: 3px; flex-shrink: 0; }

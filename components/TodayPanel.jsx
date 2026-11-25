@@ -8,7 +8,7 @@ import { useToday, useBreaks } from '@/hooks/useStatus.js'
 // a row turns done when its event arrives (habits.config.js). The strip is the last 7 days
 // for a daily habit and the last 8 weeks for a weekly quota; the full history is /habits.
 export default function TodayPanel() {
-  const { today } = useToday()
+  const { today, dismissMail } = useToday()
 
   return (
     <div className="glass card today-card">
@@ -26,6 +26,9 @@ export default function TodayPanel() {
                   <div className="td-name">{i.label}</div>
                   <div className="td-status">{i.list?.length ? i.list.join(' · ') : i.text}</div>
                 </div>
+                {i.mailId && (
+                  <button className="td-dismiss" title="Not a recruiter waiting on me" aria-label={`Dismiss ${i.label}`} onClick={() => dismissMail(i.mailId)}>×</button>
+                )}
                 {i.strip && (
                   <div className="td-strip" aria-label={`${i.label}: recent history`}>
                     {i.strip.map((c, n) => (

@@ -23,6 +23,7 @@ export const api = {
   updateStatus:     (vaultId, updates)   => request('PATCH',  `/status/${vaultId}`, updates),
   getHabits:        ()                   => request('GET',    '/habits'),
   getToday:         ()                   => request('GET',    '/today'),
+  dismissMail:      (id)                 => request('DELETE', `/recruiter?id=${encodeURIComponent(id)}`),
   getBreaks:        ()                   => request('GET',    '/breaks'),
   startBreak:       (service)            => request('POST',   '/breaks', { service }),
   getInbox:         ()                   => request('GET',    '/inbox'),

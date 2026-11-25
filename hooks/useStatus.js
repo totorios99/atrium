@@ -235,13 +235,14 @@ export function useHabits() {
 
 export function useToday() {
   const [today, setToday] = useState(null)
+  const load = useCallback(() => api.getToday().then(setToday).catch(() => {}), [])
   useEffect(() => {
-    const load = () => api.getToday().then(setToday).catch(() => {})
     load()
     const id = setInterval(load, POLL_INTERVAL)
     return () => clearInterval(id)
-  }, [])
-  return { today }
+  }, [load])
+  const dismissMail = useCallback(async id => { await api.dismissMail(id).catch(() => {}); load() }, [load])
+  return { today, dismissMail }
 }
 
 export function useBreaks() {
