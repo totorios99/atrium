@@ -416,7 +416,7 @@ body {
 .h-home   { --pill: hsl(var(--azure)); }
 
 /* habits: 26 weekly cells per habit, filled by the share of the week's target met */
-.hm-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--glass-border); --pill: hsl(var(--jade)); }
+.hm-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 9px 0; --pill: hsl(var(--jade)); }
 .hm-row:first-of-type { border-top: none; }
 .hm-row .h-name { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
 .hm-status { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .04em; color: var(--ink-faint); margin-top: 3px; }
