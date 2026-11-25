@@ -61,7 +61,7 @@ function accentProps(s) {
   return { className: '', style: { '--accent': s.vault_color, '--accent-soft': s.vault_color } }
 }
 
-const PER_PAGE = 4
+const PER_PAGE = 3
 
 // move item from index `from` to index `to`, return new array
 function move(arr, from, to) {

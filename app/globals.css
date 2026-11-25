@@ -425,10 +425,19 @@ body {
 .hm-cells { display: grid; grid-template-columns: repeat(13, 9px); gap: 3px; }
 .hm-cell { width: 9px; height: 9px; border-radius: 2.5px; background: var(--ink-ghost); position: relative; overflow: hidden; }
 .hm-cell::after { content: ""; position: absolute; inset: 0; background: var(--pill); opacity: calc(var(--r) * 0.95); border-radius: inherit; }
-.td-row { grid-template-columns: minmax(0,1fr); }
-.td-block-name { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); margin: 10px 0 2px; }
-.td-block:first-of-type .td-block-name { margin-top: 0; }
-.td-row.done .h-name { text-decoration: line-through; opacity: .6; }
+/* Today: no rules between rows; parts of the day are separated by space and their label */
+.td-block + .td-block { margin-top: 18px; }
+.td-block-name { font-family: "JetBrains Mono", monospace; font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+.td-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; --pill: hsl(var(--jade)); }
+.td-text { flex: 1; min-width: 0; }
+.td-name { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; }
+.td-status { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ink-faint); margin-top: 3px; overflow-wrap: anywhere; }
+.td-row.done .td-name { color: var(--ink-faint); }
+.td-row.done .td-status { color: var(--pill); }
+.td-row.warn .td-status { color: hsl(var(--coral)); }
+.td-strip { display: flex; gap: 3px; flex-shrink: 0; }
+.habits-page { max-width: 760px; }
+.habits-page > .ghost-btn { align-self: flex-start; text-decoration: none; }
 .hm-cell.now { outline: 1px solid var(--pill); outline-offset: 1px; }
 
 /* ── bottom 2-col row ── */
@@ -618,7 +627,7 @@ body {
 /* ── responsive ── */
 @media (max-width: 1080px) {
   .main-row { grid-template-columns: 1fr 1fr; }
-  .habits-card { grid-column: 1 / -1; }
+  .today-card { grid-column: 1 / -1; }
 }
 @media (max-width: 720px) {
   .main-row, .bottom-row { grid-template-columns: 1fr; }

@@ -5,6 +5,8 @@ import { dayOf, addDays, mondayOf, summarize } from '@/lib/habits.js'
 
 export const dynamic = 'force-dynamic'
 
+const STRIP_WEEKS = 8   // weekly quotas show their last 8 weeks; daily habits their last 7 days
+
 // Mise answers on the host port; the admin secret makes it act as my user (header only).
 async function mise(path) {
   const url = process.env.MISE_URL, secret = process.env.MISE_ADMIN_SECRET
@@ -36,13 +38,16 @@ async function meals(today) {
 export async function GET() {
   const today = dayOf(new Date())
   const events = await prisma.habitEvent.findMany({
-    where: { day: { gte: addDays(mondayOf(today), -7) } }, select: { habit: true, day: true },
+    where: { day: { gte: addDays(mondayOf(today), -7 * STRIP_WEEKS) } }, select: { habit: true, day: true },
   })
-  const byKey = new Map(summarize(habits, events, today, 2).map(s => [s.key, s]))
+  const byKey = new Map(summarize(habits, events, today, STRIP_WEEKS).map(s => [s.key, s]))
 
   const items = habits.map(h => {
     const s = byKey.get(h.key)
-    return { key: h.key, block: h.block ?? 'all day', label: h.label, text: s.text, done: s.done, warn: s.warn }
+    const strip = h.period === 'day'
+      ? s.days.map(d => ({ id: d.day, r: d.done ? 1 : 0, title: d.day }))
+      : s.cells.map(c => ({ id: c.week, r: c.ratio, title: `Week of ${c.week}: ${c.count}/${h.target}` }))
+    return { key: h.key, block: h.block ?? 'all day', label: h.label, text: s.text, done: s.done, warn: s.warn, strip }
   })
   const m = await meals(today)
   items.push({ key: 'meals', block: 'all day', label: 'Meals', text: m.detail, list: m.titles, done: false, warn: false })
