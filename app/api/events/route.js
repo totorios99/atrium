@@ -5,7 +5,7 @@ import { habits } from '@/habits.config.js'
 import { dayOf } from '@/lib/habits.js'
 
 // POST { habit, source, at?, ref?, note? } with Authorization: Bearer <EVENTS_TOKEN>.
-// Callers: iPhone Shortcuts (NFC taps, Watch workouts), the Forma poller, Hermes.
+// Callers: iPhone Shortcuts (NFC taps, Fitness-app workouts logged on the iPhone), the Forma poller, Hermes.
 const KEYS = new Set(habits.flatMap(h => [h.key, ...(h.from ?? [])]))
 
 
